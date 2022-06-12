@@ -16,6 +16,5 @@ export * from './json-api-resource-manager';
 export * from './json-api-resource-metadata-key';
 export * from './json-api-resource-metadata';
 export * from './json-api-resource-options';
-export * from './json-api-resource-type';
 export * from './json-api-resource';
 export * from './json-api-sort-expression-visitor';
