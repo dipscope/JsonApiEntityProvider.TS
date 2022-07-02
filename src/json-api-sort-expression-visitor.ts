@@ -1,7 +1,5 @@
 import isNil from 'lodash/isNil';
-
 import { AscSortExpression, DescSortExpression, SortExpressionVisitor } from '@dipscope/entity-store';
-
 import { JsonApiExpressionVisitor } from './json-api-expression-visitor';
 
 /**

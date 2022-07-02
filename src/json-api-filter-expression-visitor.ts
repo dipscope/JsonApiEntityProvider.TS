@@ -4,7 +4,6 @@ import { GteFilterExpression, InFilterExpression, LtFilterExpression } from '@di
 import { LteFilterExpression, NotContainsFilterExpression, NotEndsWithFilterExpression } from '@dipscope/entity-store';
 import { NotEqFilterExpression, NotInFilterExpression, NotStartsWithFilterExpression } from '@dipscope/entity-store';
 import { OrFilterExpression, StartsWithFilterExpression } from '@dipscope/entity-store';
-
 import { JsonApiExpressionVisitor } from './json-api-expression-visitor';
 
 /**

@@ -1,8 +1,6 @@
 import isNil from 'lodash/isNil';
-
 import { Entity } from '@dipscope/entity-store';
 import { TypeFn, TypeManager, TypeMetadata } from '@dipscope/type-manager';
-
 import { JsonApiResourceMetadata } from './json-api-resource-metadata';
 import { jsonApiResourceMetadataKey } from './json-api-resource-metadata-key';
 import { JsonApiResourceOptions } from './json-api-resource-options';

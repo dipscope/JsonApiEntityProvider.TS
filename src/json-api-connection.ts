@@ -1,5 +1,6 @@
+import { isNode } from 'browser-or-node';
 import isString from 'lodash/isString';
-
+import * as nodeFetch from 'node-fetch';
 import { ConflictJsonApiError } from './errors/conflict-json-api-error';
 import { ForbiddenJsonApiError } from './errors/forbidden-json-api-error';
 import { NotFoundJsonApiError } from './errors/not-found-json-api-error';
@@ -58,7 +59,7 @@ export class JsonApiConnection
      */
     private buildHeaders(): Headers
     {
-        const headers = new Headers();
+        const headers = this.createHeaders();
 
         headers.set('Content-Type', 'application/vnd.api+json');
         headers.set('Accept', 'application/vnd.api+json');
@@ -76,10 +77,10 @@ export class JsonApiConnection
     public async get(linkObject: LinkObject): Promise<DocumentObject>
     {
         const href = this.extractHref(linkObject);
-        const headers = new Headers(this.headers);
-        const request = new Request(href, { headers: headers, credentials: 'same-origin', method: 'GET' });
+        const headers = this.createHeaders(this.headers);
+        const request = this.createRequest(href, { headers: headers, credentials: 'same-origin', method: 'GET' });
         const interceptedRequest = this.jsonApiRequestInterceptor(request);
-        const response = await fetch(interceptedRequest);
+        const response = await this.fetch(interceptedRequest);
 
         switch (response.status)
         {
@@ -104,10 +105,10 @@ export class JsonApiConnection
     {
         const href = this.extractHref(linkObject);
         const body = JSON.stringify(documentObject);
-        const headers = new Headers(this.headers);
-        const request = new Request(href, { headers: headers, credentials: 'same-origin', method: 'POST', body: body });
+        const headers = this.createHeaders(this.headers);
+        const request = this.createRequest(href, { headers: headers, credentials: 'same-origin', method: 'POST', body: body });
         const interceptedRequest = this.jsonApiRequestInterceptor(request);
-        const response = await fetch(interceptedRequest);
+        const response = await this.fetch(interceptedRequest);
 
         switch (response.status)
         {
@@ -139,10 +140,10 @@ export class JsonApiConnection
     {
         const href = this.extractHref(linkObject);
         const body = JSON.stringify(documentObject);
-        const headers = new Headers(this.headers);
-        const request = new Request(href, { headers: headers, credentials: 'same-origin', method: 'PATCH', body: body });
+        const headers = this.createHeaders(this.headers);
+        const request = this.createRequest(href, { headers: headers, credentials: 'same-origin', method: 'PATCH', body: body });
         const interceptedRequest = this.jsonApiRequestInterceptor(request);
-        const response = await fetch(interceptedRequest);
+        const response = await this.fetch(interceptedRequest);
 
         switch (response.status)
         {
@@ -172,10 +173,10 @@ export class JsonApiConnection
     public async delete(linkObject: LinkObject): Promise<void>
     {
         const href = this.extractHref(linkObject);
-        const headers = new Headers(this.headers);
-        const request = new Request(href, { headers: headers, credentials: 'same-origin', method: 'DELETE' });
+        const headers = this.createHeaders(this.headers);
+        const request = this.createRequest(href, { headers: headers, credentials: 'same-origin', method: 'DELETE' });
         const interceptedRequest = this.jsonApiRequestInterceptor(request);
-        const response = await fetch(interceptedRequest);
+        const response = await this.fetch(interceptedRequest);
 
         switch (response.status)
         {
@@ -200,5 +201,57 @@ export class JsonApiConnection
     private extractHref(linkObject: LinkObject): string
     {
         return isString(linkObject) ? linkObject : linkObject.href;
+    }
+
+    /**
+     * Creates headers.
+     * 
+     * @param {Record<string, any>} init Init object.
+     * 
+     * @returns {Headers} Headers created from init object.
+     */
+    private createHeaders(init?: Record<string, any>): Headers
+    {
+        if (isNode) 
+        {
+            return new nodeFetch.Headers(init) as any;
+        }
+
+        return new Headers(init);
+    }
+
+    /**
+     * Creates request.
+     * 
+     * @param {any} url Url to create request for. 
+     * @param {Record<string, any>} init Init object.
+     * 
+     * @returns {Request} Requst created for url and init object.
+     */
+    private createRequest(url: any, init?: Record<string, any>): Request
+    {
+        if (isNode)
+        {
+            return new nodeFetch.Request(url, init) as any;
+        }
+
+        return new Request(url, init);
+    }
+
+    /**
+     * Sends fetch request.
+     * 
+     * @param {Request} request Request to send.
+     * 
+     * @returns {Promise<Response>} Response.
+     */ 
+    private fetch(request: Request): Promise<Response>
+    {
+        if (isNode) 
+        {
+            return nodeFetch.default(request as any) as any;
+        }
+
+        return fetch(request);
     }
 }

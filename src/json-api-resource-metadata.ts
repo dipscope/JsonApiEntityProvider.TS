@@ -1,8 +1,7 @@
 import isUndefined from 'lodash/isUndefined';
-
 import { Entity } from '@dipscope/entity-store';
 import { TypeMetadata } from '@dipscope/type-manager';
-
+import { jsonApiResourceId } from './json-api-resource-id';
 import { JsonApiResourceOptions } from './json-api-resource-options';
 
 /**
@@ -47,7 +46,17 @@ export class JsonApiResourceMetadata<TEntity extends Entity>
      */
     public get type(): string
     {
-        return this.jsonApiResourceOptions.type ?? this.typeMetadata.typeName.toLowerCase();
+        return this.jsonApiResourceOptions.type ?? this.typeMetadata.typeName;
+    }
+
+    /**
+     * Gets property name representing id.
+     * 
+     * @returns {string} Property name representing id.
+     */
+    public get id(): string
+    {
+        return this.jsonApiResourceOptions.id ?? jsonApiResourceId;
     }
 
     /**
@@ -62,6 +71,11 @@ export class JsonApiResourceMetadata<TEntity extends Entity>
         if (!isUndefined(jsonApiResourceOptions.type))
         {
             this.jsonApiResourceOptions.type = jsonApiResourceOptions.type;
+        }
+
+        if (!isUndefined(jsonApiResourceOptions.id))
+        {
+            this.jsonApiResourceOptions.id = jsonApiResourceOptions.id;
         }
 
         return this;

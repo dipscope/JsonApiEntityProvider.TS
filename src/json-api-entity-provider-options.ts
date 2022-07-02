@@ -36,4 +36,13 @@ export interface JsonApiEntityProviderOptions
      * @type {JsonApiPaginateExpressionVisitor}
      */
     jsonApiPaginateExpressionVisitor?: JsonApiPaginateExpressionVisitor;
+    
+    /**
+     * Since full replacement of to-many relationship may be a very dangerous operation, a server 
+     * may choose to disallow it. By default such relationships are not sent. You can enable this by
+     * setting this option to true.
+     * 
+     * @type {boolean}
+     */
+    allowToManyRelationshipReplacement?: boolean;
 }

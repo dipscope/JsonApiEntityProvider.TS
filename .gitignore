@@ -341,3 +341,6 @@ healthchecksdb
 
 # Distribution folder
 dist
+
+# Database files
+*.db

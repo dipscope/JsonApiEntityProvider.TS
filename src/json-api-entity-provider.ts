@@ -1,11 +1,9 @@
 import isNil from 'lodash/isNil';
-
 import { AddCommand, BatchRemoveCommand, BatchUpdateCommand, BrowseCommand } from '@dipscope/entity-store';
 import { BulkAddCommand, BulkQueryCommand, BulkRemoveCommand, BulkSaveCommand } from '@dipscope/entity-store';
 import { BulkUpdateCommand, QueryCommand, RemoveCommand, SaveCommand, UpdateCommand } from '@dipscope/entity-store';
 import { Entity, EntityCollection, EntityProvider, Nullable } from '@dipscope/entity-store';
 import { TypeMetadata } from '@dipscope/type-manager';
-
 import { JsonApiNetFilterExpressionVisitor } from './filter-expression-visitors/json-api-net-filter-expression-visitor';
 import { JsonApiAdapter } from './json-api-adapter';
 import { JsonApiConnection } from './json-api-connection';
@@ -81,7 +79,7 @@ export class JsonApiEntityProvider implements EntityProvider
         this.jsonApiPaginateExpressionVisitor = jsonApiEntityProviderOptions.jsonApiPaginateExpressionVisitor ?? new OffsetBasedPaginateExpressionVisitor();
         this.jsonApiSortExpressionVisitor = new JsonApiSortExpressionVisitor();
         this.jsonApiIncludeExpressionVisitor = new JsonApiIncludeExpressionVisitor();
-        this.jsonApiAdapter = new JsonApiAdapter();
+        this.jsonApiAdapter = new JsonApiAdapter(jsonApiEntityProviderOptions.allowToManyRelationshipReplacement ?? false);
         
         return;
     }

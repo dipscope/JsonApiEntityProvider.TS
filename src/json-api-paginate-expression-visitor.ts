@@ -1,5 +1,4 @@
 import { PaginateExpression, PaginateExpressionVisitor } from '@dipscope/entity-store';
-
 import { JsonApiExpressionVisitor } from './json-api-expression-visitor';
 
 /**

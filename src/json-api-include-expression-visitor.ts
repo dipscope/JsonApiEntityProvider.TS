@@ -1,7 +1,5 @@
 import isNil from 'lodash/isNil';
-
 import { IncludeExpression, IncludeExpressionVisitor } from '@dipscope/entity-store';
-
 import { JsonApiExpressionVisitor } from './json-api-expression-visitor';
 
 /**

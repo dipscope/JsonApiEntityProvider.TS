@@ -126,221 +126,208 @@ describe('Json api entity provider', () =>
     {
         const specEntityStore = new SpecEntityStore();
         const userSet = specEntityStore.userSet;
-        const user = new User('Dmitry', 1);
+        const user = new User('Leo', 1);
         const addedUser = await userSet.add(user);
 
-        expect(addedUser).not.toBeNull();
         expect(addedUser).toBe(user);
         expect(addedUser.id).toBeDefined();
-        expect(addedUser.name).toBe('Dmitry');
+        expect(addedUser.name).toBe('Leo');
         expect(addedUser.position).toBe(1);
     });
 
-    // it('should update existing entities', async () =>
-    // {
-    //     const specEntityStore = new SpecEntityStore();
-    //     const userSet = specEntityStore.userSet;
-    //     const addedUser = await userSet.where((u, fe) => fe.eq(u.name, 'Dmitry')).findOne();
+    it('should update existing entities', async () =>
+    {
+        const specEntityStore = new SpecEntityStore();
+        const userSet = specEntityStore.userSet;
+        const user = new User('Kira', 1);
+        const addedUser = await userSet.add(user);
 
-    //     expect(addedUser).not.toBeNull();
+        expect(addedUser).toBe(user);
 
-    //     addedUser!.name = 'Alex';
+        user.name = 'KiraUpdated';
 
-    //     const updatedUser = await userSet.update(addedUser);
-    //     const foundUser = await userSet.where((u, fe) => fe.eq(u.name, 'Alex')).findOne();
+        const updatedUser = await userSet.update(user);
 
-    //     expect(updatedUser).not.toBeNull();
-    //     expect(foundUser).not.toBeNull();
-    // });
+        expect(updatedUser).toBe(user);
 
-    // it('should save new entities', async () =>
-    // {
-    //     const specEntityStore = new SpecEntityStore();
-    //     const userSet = specEntityStore.userSet;
-    //     const user = new User('Dmitry');
-    //     const addedUser = await userSet.save(user);
-    //     const foundAddedUser = await userSet.where((u, fe) => fe.eq(u.name, 'Dmitry')).findOne();
+        const foundUser = await userSet.where((u, fe) => fe.eq(u.name, 'KiraUpdated')).findOne();
 
-    //     expect(addedUser).not.toBeNull();
-    //     expect(foundAddedUser).not.toBeNull();
+        expect(foundUser).not.toBeNull();
+    });
 
-    //     user.name = 'Alex';
+    it('should save new entities', async () =>
+    {
+        const specEntityStore = new SpecEntityStore();
+        const userSet = specEntityStore.userSet;
+        const user = new User('Greg', 2);
+        const addedUser = await userSet.save(user);
 
-    //     const updatedUser = await userSet.save(user);
-    //     const foundUpdatedUser = await userSet.where((u, fe) => fe.eq(u.name, 'Alex')).findOne();
+        expect(addedUser).toBe(user);
 
-    //     expect(updatedUser).not.toBeNull();
-    //     expect(foundUpdatedUser).not.toBeNull();
-    // });
+        const foundAddedUser = await userSet.where((u, fe) => fe.eq(u.name, 'Greg')).findOne();
 
-    // it('should remove existing entities', async () =>
-    // {
-    //     const specEntityStore = new SpecEntityStore();
-    //     const userSet = specEntityStore.userSet;
-    //     const user = new User('Dmitry');
-    //     const addedUser = await userSet.add(user);
+        expect(foundAddedUser).not.toBeNull();
 
-    //     expect(addedUser).not.toBeNull();
+        user.name = 'GregUpdated';
 
-    //     const removedUser = await userSet.remove(user);
-    //     const foundUser = await userSet.where((u, fe) => fe.eq(u.name, 'Dmitry')).findOne();
+        const updatedUser = await userSet.save(user);
 
-    //     expect(removedUser).not.toBeNull();
-    //     expect(foundUser).toBeNull();
-    // });
+        expect(updatedUser).toBe(user);
 
-    // it('should bulk add new entities', async () =>
-    // {
-    //     const specEntityStore = new SpecEntityStore();
-    //     const userSet = specEntityStore.userSet;
-    //     const userX = new User('Dmitry');
-    //     const userY = new User('Alex');
-    //     const addedUsers = await userSet.bulkAdd([userX, userY]);
-    //     const foundUsers = await userSet.where((u, fe) => fe.in(u.name, ['Dmitry', 'Alex'])).findAll();
+        const foundUpdatedUser = await userSet.where((u, fe) => fe.eq(u.name, 'GregUpdated')).findOne();
 
-    //     expect(addedUsers.length).toBe(2);
-    //     expect(foundUsers.length).toBe(2);
-    // });
+        expect(foundUpdatedUser).not.toBeNull();
+    });
 
-    // it('should bulk update existing entities', async () =>
-    // {
-    //     const specEntityStore = new SpecEntityStore();
-    //     const userSet = specEntityStore.userSet;
-    //     const userX = new User('Dmitry');
-    //     const userY = new User('Alex');
-    //     const addedUsers = await userSet.bulkAdd([userX, userY]);
+    it('should remove existing entities', async () =>
+    {
+        const specEntityStore = new SpecEntityStore();
+        const userSet = specEntityStore.userSet;
+        const user = new User('Barry', 1);
+        const addedUser = await userSet.add(user);
 
-    //     expect(addedUsers.length).toBe(2);
+        expect(addedUser).toBe(user);
 
-    //     userX.name = 'Victor';
-    //     userY.name = 'Roman';
+        const foundAddedUser = await userSet.where((u, fe) => fe.eq(u.name, 'Barry')).findOne();
 
-    //     const updatedUsers = await userSet.bulkUpdate([userX, userY]);
-    //     const foundUsers = await userSet.where((u, fe) => fe.in(u.name, ['Victor', 'Roman'])).findAll();
+        expect(foundAddedUser).not.toBeNull();
 
-    //     expect(updatedUsers.length).toBe(2);
-    //     expect(foundUsers.length).toBe(2);
-    // });
+        const removedUser = await userSet.remove(user);
 
-    // it('should bulk save new entities', async () =>
-    // {
-    //     const specEntityStore = new SpecEntityStore();
-    //     const userSet = specEntityStore.userSet;
-    //     const userX = new User('Dmitry');
-    //     const userY = new User('Alex');
-    //     const addedUsers = await userSet.bulkSave([userX, userY]);
-    //     const foundAddedUsers = await userSet.where((u, fe) => fe.in(u.name, ['Dmitry', 'Alex'])).findAll();
+        expect(removedUser).toBe(user);
 
-    //     expect(addedUsers.length).toBe(2);
-    //     expect(foundAddedUsers.length).toBe(2);
+        const foundUser = await userSet.where((u, fe) => fe.eq(u.name, 'Barry')).findOne();
 
-    //     userX.name = 'Victor';
-    //     userY.name = 'Roman';
+        expect(foundUser).toBeNull();
+    });
 
-    //     const updatedUsers = await userSet.bulkUpdate([userX, userY]);
-    //     const foundUpdatedUsers = await userSet.where((u, fe) => fe.in(u.name, ['Victor', 'Roman'])).findAll();
+    it('should bulk add new entities', async () =>
+    {
+        const specEntityStore = new SpecEntityStore();
+        const userSet = specEntityStore.userSet;
+        const userX = new User('Neo', 1);
+        const userY = new User('John', 2);
+        const addedUsers = await userSet.bulkAdd([userX, userY]);
+        const foundUsers = await userSet.where((u, fe) => fe.in(u.name, ['Neo', 'John'])).findAll();
 
-    //     expect(updatedUsers.length).toBe(2);
-    //     expect(foundUpdatedUsers.length).toBe(2);
-    // });
+        expect(addedUsers.length).toBe(2);
+        expect(addedUsers.at(0)).toBe(userX);
+        expect(addedUsers.at(1)).toBe(userY);
+        expect(foundUsers.length).toBe(2);
+    });
 
-    // it('should batch update existing entities', async () =>
-    // {
-    //     const specEntityStore = new SpecEntityStore();
-    //     const userSet = specEntityStore.userSet;
-    //     const userX = new User('Dmitry');
-    //     const userY = new User('Alex');
-    //     const addedUsers = await userSet.bulkAdd([userX, userY]);
+    it('should bulk update existing entities', async () =>
+    {
+        const specEntityStore = new SpecEntityStore();
+        const userSet = specEntityStore.userSet;
+        const userX = new User('Xena', 1);
+        const userY = new User('Vio', 2);
+        const addedUsers = await userSet.bulkAdd([userX, userY]);
 
-    //     expect(addedUsers.length).toBe(2);
+        expect(addedUsers.length).toBe(2);
+        expect(addedUsers.at(0)).toBe(userX);
+        expect(addedUsers.at(1)).toBe(userY);
 
-    //     await userSet.where((u, fe) => fe.in(u.name, ['Dmitry', 'Alex'])).update({ name: 'Victor' });
+        userX.name = 'XenaUpdated';
+        userY.name = 'VioUpdated';
 
-    //     const updatedUsers = await userSet.where((u, fe) => fe.eq(u.name, 'Victor')).findAll();
+        const updatedUsers = await userSet.bulkUpdate([userX, userY]);
 
-    //     expect(updatedUsers.length).toBe(2);
-    // });
+        expect(updatedUsers.length).toBe(2);
+        expect(updatedUsers.at(0)).toBe(userX);
+        expect(updatedUsers.at(1)).toBe(userY);
 
-    // it('should bulk remove existing entities', async () =>
-    // {
-    //     const specEntityStore = new SpecEntityStore();
-    //     const userSet = specEntityStore.userSet;
-    //     const userX = new User('Dmitry');
-    //     const userY = new User('Alex');
-    //     const addedUsers = await userSet.bulkAdd([userX, userY]);
+        const foundUsers = await userSet.where((u, fe) => fe.in(u.name, ['XenaUpdated', 'VioUpdated'])).findAll();
 
-    //     expect(addedUsers.length).toBe(2);
+        expect(foundUsers.length).toBe(2);
+    });
 
-    //     const removedUsers = await userSet.bulkRemove([userX, userY]);
-    //     const foundUsers = await userSet.where((u, fe) => fe.in(u.name, ['Dmitry', 'Alex'])).findAll();
+    it('should bulk save new entities', async () =>
+    {
+        const specEntityStore = new SpecEntityStore();
+        const userSet = specEntityStore.userSet;
+        const userX = new User('Lena', 1);
+        const userY = new User('Sveta', 2);
+        const addedUsers = await userSet.bulkSave([userX, userY]);
 
-    //     expect(removedUsers.length).toBe(2);
-    //     expect(foundUsers.length).toBe(0);
-    // });
+        expect(addedUsers.length).toBe(2);
+        expect(addedUsers.at(0)).toBe(userX);
+        expect(addedUsers.at(1)).toBe(userY);
 
-    // it('should batch remove existing entities', async () =>
-    // {
-    //     const specEntityStore = new SpecEntityStore();
-    //     const userSet = specEntityStore.userSet;
-    //     const userX = new User('Dmitry');
-    //     const userY = new User('Alex');
-    //     const addedUsers = await userSet.bulkAdd([userX, userY]);
+        const foundAddedUsers = await userSet.where((u, fe) => fe.in(u.name, ['Lena', 'Sveta'])).findAll();
 
-    //     expect(addedUsers.length).toBe(2);
+        expect(foundAddedUsers.length).toBe(2);
 
-    //     await userSet.where((u, fe) => fe.in(u.name, ['Dmitry', 'Alex'])).remove();
+        userX.name = 'LenaUpdated';
+        userY.name = 'SvetaUpdated';
 
-    //     const foundUsers = await userSet.where((u, fe) => fe.in(u.name, ['Dmitry', 'Alex'])).findAll();
+        const updatedUsers = await userSet.bulkSave([userX, userY]);
 
-    //     expect(foundUsers.length).toBe(0);
-    // });
+        expect(updatedUsers.length).toBe(2);
+        expect(updatedUsers.at(0)).toBe(userX);
+        expect(updatedUsers.at(1)).toBe(userY);
 
-    // it('should sort existing entities in ascending order', async () =>
-    // {
-    //     const specEntityStore = new SpecEntityStore();
-    //     const userSet = specEntityStore.userSet;
-    //     const userX = new User('Dmitry');
-    //     const userY = new User('Alex');
-    //     const addedUsers = await userSet.bulkAdd([userX, userY]);
+        const foundUsers = await userSet.where((u, fe) => fe.in(u.name, ['LenaUpdated', 'SvetaUpdated'])).findAll();
 
-    //     expect(addedUsers.length).toBe(2);
+        expect(foundUsers.length).toBe(2);
+    });
 
-    //     const sortedUsers = await userSet.sortByAsc(e => e.name).findAll();
+    it('should bulk remove existing entities', async () =>
+    {
+        const specEntityStore = new SpecEntityStore();
+        const userSet = specEntityStore.userSet;
+        const userX = new User('Geo', 1);
+        const userY = new User('Zeo', 2);
+        const addedUsers = await userSet.bulkAdd([userX, userY]);
 
-    //     expect(sortedUsers.at(0)?.name).toBe('Alex');
-    //     expect(sortedUsers.at(1)?.name).toBe('Dmitry');
-    // });
+        expect(addedUsers.length).toBe(2);
+        expect(addedUsers.at(0)).toBe(userX);
+        expect(addedUsers.at(1)).toBe(userY);
 
-    // it('should sort existing entities in descending order', async () =>
-    // {
-    //     const specEntityStore = new SpecEntityStore();
-    //     const userSet = specEntityStore.userSet;
-    //     const userX = new User('Dmitry');
-    //     const userY = new User('Alex');
-    //     const addedUsers = await userSet.bulkAdd([userX, userY]);
+        const removedUsers = await userSet.bulkRemove([userX, userY]);
 
-    //     expect(addedUsers.length).toBe(2);
+        expect(removedUsers.length).toBe(2);
+        expect(removedUsers.at(0)).toBe(userX);
+        expect(removedUsers.at(1)).toBe(userY);
 
-    //     const sortedUsers = await userSet.sortByDesc(e => e.name).findAll();
+        const foundUsers = await userSet.where((u, fe) => fe.in(u.name, ['Geo', 'Zeo'])).findAll();
 
-    //     expect(sortedUsers.at(0)?.name).toBe('Dmitry');
-    //     expect(sortedUsers.at(1)?.name).toBe('Alex');
-    // });
+        expect(foundUsers.length).toBe(0);
+    });
 
-    // it('should filter existing entities', async () =>
-    // {
-    //     const specEntityStore = new SpecEntityStore();
-    //     const userSet = specEntityStore.userSet;
-    //     const userX = new User('Dmitry');
-    //     const userY = new User('Alex');
-    //     const userZ = new User('Victor');
-    //     const addedUsers = await userSet.bulkAdd([userX, userY, userZ]);
+    it('should sort existing entities in ascending order', async () =>
+    {
+        const specEntityStore = new SpecEntityStore();
+        const userSet = specEntityStore.userSet;
+        const userX = new User('Mao', 1);
+        const userY = new User('Dao', 2);
+        const addedUsers = await userSet.bulkAdd([userX, userY]);
 
-    //     expect(addedUsers.length).toBe(3);
+        expect(addedUsers.length).toBe(2);
+        expect(addedUsers.at(0)).toBe(userX);
+        expect(addedUsers.at(1)).toBe(userY);
 
-    //     const filteredUsers = await userSet.where((u, fe) => fe.eq(u.name, 'Alex')).findAll();
+        const sortedUsers = await userSet.where((u, fe) => fe.in(u.name, ['Mao', 'Dao'])).sortByAsc(e => e.name).findAll();
 
-    //     expect(filteredUsers.length).toBe(1);
-    //     expect(filteredUsers.first()).toBe(userY);
-    // });
+        expect(sortedUsers.at(0)?.name).toBe('Dao');
+        expect(sortedUsers.at(1)?.name).toBe('Mao');
+    });
+
+    it('should sort existing entities in descending order', async () =>
+    {
+        const specEntityStore = new SpecEntityStore();
+        const userSet = specEntityStore.userSet;
+        const userX = new User('Wao', 1);
+        const userY = new User('Uao', 2);
+        const addedUsers = await userSet.bulkAdd([userX, userY]);
+
+        expect(addedUsers.length).toBe(2);
+        expect(addedUsers.at(0)).toBe(userX);
+        expect(addedUsers.at(1)).toBe(userY);
+
+        const sortedUsers = await userSet.where((u, fe) => fe.in(u.name, ['Wao', 'Uao'])).sortByDesc(e => e.name).findAll();
+
+        expect(sortedUsers.at(0)?.name).toBe('Wao');
+        expect(sortedUsers.at(1)?.name).toBe('Uao');
+    });
 });
