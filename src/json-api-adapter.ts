@@ -1,7 +1,10 @@
 import isArray from 'lodash/isArray';
 import isEmpty from 'lodash/isEmpty';
 import isNil from 'lodash/isNil';
+import isNull from 'lodash/isNull';
 import isUndefined from 'lodash/isUndefined';
+import toNumber from 'lodash/toNumber';
+import toString from 'lodash/toString';
 import { Entity, EntityCollection, Nullable } from '@dipscope/entity-store';
 import { PropertyMetadata, ReferenceCallback, TypeMetadata } from '@dipscope/type-manager';
 import { ReferenceKey, ReferenceValue, SerializerContext } from '@dipscope/type-manager';
@@ -183,7 +186,7 @@ export class JsonApiAdapter
 
             if (serializedPropertyName === jsonApiResourceMetadata.id)
             {
-                resourceObject.id = propertyValue;
+                resourceObject.id = toString(propertyValue);
 
                 continue;
             }
@@ -254,16 +257,23 @@ export class JsonApiAdapter
      * Creates relationship object from provided value.
      * 
      * @param {JsonApiResourceMetadata<TEntity>} jsonApiResourceMetadata Json api resource metadata.
-     * @param {Nullable<Entity>|Array<Entity>} value Relationship value.
+     * @param {undefined|Nullable<Entity>|Array<Entity>} value Relationship value.
      * 
      * @returns {RelationshipObject} Relationship object created from value.
      */
-    private createValueRelationshipObject<TEntity extends Entity>(jsonApiResourceMetadata: JsonApiResourceMetadata<TEntity>, value: Nullable<Entity> | Array<Entity>): RelationshipObject
+    private createValueRelationshipObject<TEntity extends Entity>(jsonApiResourceMetadata: JsonApiResourceMetadata<TEntity>, value: undefined | Nullable<Entity> | Array<Entity>): RelationshipObject
     {
-        const relationshipObject = { data: null } as RelationshipObject;
+        const relationshipObject = { data: undefined } as RelationshipObject;
 
-        if (isNil(value))
+        if (isUndefined(value))
         {
+            return relationshipObject;
+        }
+
+        if (isNull(value))
+        {
+            relationshipObject.data = null;
+
             return relationshipObject;
         }
 
@@ -293,7 +303,7 @@ export class JsonApiAdapter
 
         for (const serializedEntity of serializedEntities)
         {
-            const resourceIdentifierObject = { type: jsonApiResourceMetadata.type, id: serializedEntity[jsonApiResourceMetadata.id] } as ResourceIdentifierObject;
+            const resourceIdentifierObject = this.createSerializedEntityResourceIdentifierObject(jsonApiResourceMetadata, serializedEntity);
 
             resourceIdentifierObjects.push(resourceIdentifierObject);
         }
@@ -311,7 +321,7 @@ export class JsonApiAdapter
      */
     private createSerializedEntityResourceIdentifierObject<TEntity extends Entity>(jsonApiResourceMetadata: JsonApiResourceMetadata<TEntity>, serializedEntity: Entity): ResourceIdentifierObject
     {
-        const resourceIdentifierObject = { type: jsonApiResourceMetadata.type, id: serializedEntity[jsonApiResourceMetadata.id] } as ResourceIdentifierObject;
+        const resourceIdentifierObject = { type: jsonApiResourceMetadata.type, id: toString(serializedEntity[jsonApiResourceMetadata.id]) } as ResourceIdentifierObject;
 
         return resourceIdentifierObject;
     }
@@ -399,10 +409,13 @@ export class JsonApiAdapter
             }
 
             const serializedPropertyName = propertyMetadata.serializedPropertyName;
-
+            
             if (serializedPropertyName === jsonApiResourceMetadata.id)
             {
-                serializedEntity[jsonApiResourceMetadata.id] = resourceObject.id;
+                const numericId = propertyMetadata.typeMetadata.typeFn === Number;
+                const id = numericId ? toNumber(resourceObject.id) : resourceObject.id;
+
+                serializedEntity[jsonApiResourceMetadata.id] = id;
 
                 continue;
             }
@@ -427,11 +440,16 @@ export class JsonApiAdapter
      * @param {RelationshipObject} relationshipObject Relationship object.
      * @param {Array<ResourceObject>} includedResourceObjects Included resource objects.
      * 
-     * @returns {Nullable<Entity>|Array<Entity>} Relationship value.
+     * @returns {undefined|Nullable<Entity>|Array<Entity>} Relationship value.
      */
-    private createRelationshipObjectValue<TEntity extends Entity>(propertyMetadata: PropertyMetadata<TEntity, any>, relationshipObject: RelationshipObject, includedResourceObjects: Array<ResourceObject>): Nullable<Entity> | Array<Entity>
+    private createRelationshipObjectValue<TEntity extends Entity>(propertyMetadata: PropertyMetadata<TEntity, any>, relationshipObject: RelationshipObject, includedResourceObjects: Array<ResourceObject>): undefined | Nullable<Entity> | Array<Entity>
     {
-        if (isNil(relationshipObject.data))
+        if (isUndefined(relationshipObject.data))
+        {
+            return undefined;
+        }
+
+        if (isNull(relationshipObject.data))
         {
             return null;
         }

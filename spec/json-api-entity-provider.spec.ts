@@ -1,6 +1,5 @@
 import { EntityCollection, EntitySet, EntityStore } from '@dipscope/entity-store';
 import { Inject, Property, Type } from '@dipscope/type-manager';
-
 import { JsonApiEntityProvider, JsonApiNetFilterExpressionVisitor, JsonApiResource, PageBasedPaginateExpressionVisitor } from '../src';
 
 @Type()
@@ -56,14 +55,14 @@ class Company extends JsonApiEntity
 class Message extends JsonApiEntity
 {
     @Property(String) public text: string;
-    @Property(EntityCollection, [() => User]) public users: EntityCollection<User>;
+    @Property(() => User) public user: User;
 
-    public constructor(@Inject('text') text: string)
+    public constructor(@Inject('text') text: string, @Inject('user') user: User)
     {
         super();
 
         this.text = text;
-        this.users = new EntityCollection<User>();
+        this.user = user;
 
         return;
     }
@@ -108,7 +107,8 @@ class SpecEntityStore extends EntityStore
         super(new JsonApiEntityProvider({
             baseUrl: 'http://localhost:20001',
             jsonApiFilterExpressionVisitor: new JsonApiNetFilterExpressionVisitor(),
-            jsonApiPaginateExpressionVisitor: new PageBasedPaginateExpressionVisitor()
+            jsonApiPaginateExpressionVisitor: new PageBasedPaginateExpressionVisitor(),
+            allowToManyRelationshipReplacement: true
         }));
 
         this.userStatusSet = this.createEntitySet(UserStatus);
@@ -120,18 +120,27 @@ class SpecEntityStore extends EntityStore
     }
 }
 
+function generateRandomString(): string
+{
+    const isoString = new Date().toISOString();
+    const randomNumber = Math.floor(Math.random() * 99999999999999);
+
+    return `${isoString}${randomNumber}`;
+}
+
 describe('Json api entity provider', () =>
 {
     it('should add new entities', async () =>
     {
         const specEntityStore = new SpecEntityStore();
         const userSet = specEntityStore.userSet;
-        const user = new User('Leo', 1);
+        const name = generateRandomString();
+        const user = new User(name, 1);
         const addedUser = await userSet.add(user);
 
         expect(addedUser).toBe(user);
         expect(addedUser.id).toBeDefined();
-        expect(addedUser.name).toBe('Leo');
+        expect(addedUser.name).toBe(name);
         expect(addedUser.position).toBe(1);
     });
 
@@ -139,18 +148,19 @@ describe('Json api entity provider', () =>
     {
         const specEntityStore = new SpecEntityStore();
         const userSet = specEntityStore.userSet;
-        const user = new User('Kira', 1);
+        const name = generateRandomString();
+        const user = new User(name, 1);
         const addedUser = await userSet.add(user);
 
         expect(addedUser).toBe(user);
 
-        user.name = 'KiraUpdated';
+        user.name = `${name}Updated`;
 
         const updatedUser = await userSet.update(user);
 
         expect(updatedUser).toBe(user);
 
-        const foundUser = await userSet.where((u, fe) => fe.eq(u.name, 'KiraUpdated')).findOne();
+        const foundUser = await userSet.where((u, fe) => fe.eq(u.name, `${name}Updated`)).findOne();
 
         expect(foundUser).not.toBeNull();
     });
@@ -159,22 +169,23 @@ describe('Json api entity provider', () =>
     {
         const specEntityStore = new SpecEntityStore();
         const userSet = specEntityStore.userSet;
-        const user = new User('Greg', 2);
+        const name = generateRandomString();
+        const user = new User(name, 2);
         const addedUser = await userSet.save(user);
 
         expect(addedUser).toBe(user);
 
-        const foundAddedUser = await userSet.where((u, fe) => fe.eq(u.name, 'Greg')).findOne();
+        const foundAddedUser = await userSet.where((u, fe) => fe.eq(u.name, name)).findOne();
 
         expect(foundAddedUser).not.toBeNull();
 
-        user.name = 'GregUpdated';
+        user.name = `${name}Updated`;
 
         const updatedUser = await userSet.save(user);
 
         expect(updatedUser).toBe(user);
 
-        const foundUpdatedUser = await userSet.where((u, fe) => fe.eq(u.name, 'GregUpdated')).findOne();
+        const foundUpdatedUser = await userSet.where((u, fe) => fe.eq(u.name, `${name}Updated`)).findOne();
 
         expect(foundUpdatedUser).not.toBeNull();
     });
@@ -183,12 +194,13 @@ describe('Json api entity provider', () =>
     {
         const specEntityStore = new SpecEntityStore();
         const userSet = specEntityStore.userSet;
-        const user = new User('Barry', 1);
+        const name = generateRandomString();
+        const user = new User(name, 1);
         const addedUser = await userSet.add(user);
 
         expect(addedUser).toBe(user);
 
-        const foundAddedUser = await userSet.where((u, fe) => fe.eq(u.name, 'Barry')).findOne();
+        const foundAddedUser = await userSet.where((u, fe) => fe.eq(u.name, name)).findOne();
 
         expect(foundAddedUser).not.toBeNull();
 
@@ -196,7 +208,7 @@ describe('Json api entity provider', () =>
 
         expect(removedUser).toBe(user);
 
-        const foundUser = await userSet.where((u, fe) => fe.eq(u.name, 'Barry')).findOne();
+        const foundUser = await userSet.where((u, fe) => fe.eq(u.name, name)).findOne();
 
         expect(foundUser).toBeNull();
     });
@@ -205,10 +217,12 @@ describe('Json api entity provider', () =>
     {
         const specEntityStore = new SpecEntityStore();
         const userSet = specEntityStore.userSet;
-        const userX = new User('Neo', 1);
-        const userY = new User('John', 2);
+        const nameX = generateRandomString();
+        const nameY = generateRandomString();
+        const userX = new User(nameX, 1);
+        const userY = new User(nameY, 2);
         const addedUsers = await userSet.bulkAdd([userX, userY]);
-        const foundUsers = await userSet.where((u, fe) => fe.in(u.name, ['Neo', 'John'])).findAll();
+        const foundUsers = await userSet.where((u, fe) => fe.in(u.name, [nameX, nameY])).findAll();
 
         expect(addedUsers.length).toBe(2);
         expect(addedUsers.at(0)).toBe(userX);
@@ -220,16 +234,18 @@ describe('Json api entity provider', () =>
     {
         const specEntityStore = new SpecEntityStore();
         const userSet = specEntityStore.userSet;
-        const userX = new User('Xena', 1);
-        const userY = new User('Vio', 2);
+        const nameX = generateRandomString();
+        const nameY = generateRandomString();
+        const userX = new User(nameX, 1);
+        const userY = new User(nameY, 2);
         const addedUsers = await userSet.bulkAdd([userX, userY]);
 
         expect(addedUsers.length).toBe(2);
         expect(addedUsers.at(0)).toBe(userX);
         expect(addedUsers.at(1)).toBe(userY);
 
-        userX.name = 'XenaUpdated';
-        userY.name = 'VioUpdated';
+        userX.name = `${nameX}Updated`;
+        userY.name = `${nameY}Updated`;
 
         const updatedUsers = await userSet.bulkUpdate([userX, userY]);
 
@@ -237,7 +253,7 @@ describe('Json api entity provider', () =>
         expect(updatedUsers.at(0)).toBe(userX);
         expect(updatedUsers.at(1)).toBe(userY);
 
-        const foundUsers = await userSet.where((u, fe) => fe.in(u.name, ['XenaUpdated', 'VioUpdated'])).findAll();
+        const foundUsers = await userSet.where((u, fe) => fe.in(u.name, [`${nameX}Updated`, `${nameY}Updated`])).findAll();
 
         expect(foundUsers.length).toBe(2);
     });
@@ -246,20 +262,22 @@ describe('Json api entity provider', () =>
     {
         const specEntityStore = new SpecEntityStore();
         const userSet = specEntityStore.userSet;
-        const userX = new User('Lena', 1);
-        const userY = new User('Sveta', 2);
+        const nameX = generateRandomString();
+        const nameY = generateRandomString();
+        const userX = new User(nameX, 1);
+        const userY = new User(nameY, 2);
         const addedUsers = await userSet.bulkSave([userX, userY]);
 
         expect(addedUsers.length).toBe(2);
         expect(addedUsers.at(0)).toBe(userX);
         expect(addedUsers.at(1)).toBe(userY);
 
-        const foundAddedUsers = await userSet.where((u, fe) => fe.in(u.name, ['Lena', 'Sveta'])).findAll();
+        const foundAddedUsers = await userSet.where((u, fe) => fe.in(u.name, [nameX, nameY])).findAll();
 
         expect(foundAddedUsers.length).toBe(2);
 
-        userX.name = 'LenaUpdated';
-        userY.name = 'SvetaUpdated';
+        userX.name = `${nameX}Updated`;
+        userY.name = `${nameY}Updated`;
 
         const updatedUsers = await userSet.bulkSave([userX, userY]);
 
@@ -267,7 +285,7 @@ describe('Json api entity provider', () =>
         expect(updatedUsers.at(0)).toBe(userX);
         expect(updatedUsers.at(1)).toBe(userY);
 
-        const foundUsers = await userSet.where((u, fe) => fe.in(u.name, ['LenaUpdated', 'SvetaUpdated'])).findAll();
+        const foundUsers = await userSet.where((u, fe) => fe.in(u.name, [`${nameX}Updated`, `${nameY}Updated`])).findAll();
 
         expect(foundUsers.length).toBe(2);
     });
@@ -276,8 +294,10 @@ describe('Json api entity provider', () =>
     {
         const specEntityStore = new SpecEntityStore();
         const userSet = specEntityStore.userSet;
-        const userX = new User('Geo', 1);
-        const userY = new User('Zeo', 2);
+        const nameX = generateRandomString();
+        const nameY = generateRandomString();
+        const userX = new User(nameX, 1);
+        const userY = new User(nameY, 2);
         const addedUsers = await userSet.bulkAdd([userX, userY]);
 
         expect(addedUsers.length).toBe(2);
@@ -290,7 +310,7 @@ describe('Json api entity provider', () =>
         expect(removedUsers.at(0)).toBe(userX);
         expect(removedUsers.at(1)).toBe(userY);
 
-        const foundUsers = await userSet.where((u, fe) => fe.in(u.name, ['Geo', 'Zeo'])).findAll();
+        const foundUsers = await userSet.where((u, fe) => fe.in(u.name, [nameX, nameY])).findAll();
 
         expect(foundUsers.length).toBe(0);
     });
@@ -299,35 +319,90 @@ describe('Json api entity provider', () =>
     {
         const specEntityStore = new SpecEntityStore();
         const userSet = specEntityStore.userSet;
-        const userX = new User('Mao', 1);
-        const userY = new User('Dao', 2);
+        const nameX = generateRandomString();
+        const nameY = generateRandomString();
+        const userX = new User(nameX, 1);
+        const userY = new User(nameY, 2);
         const addedUsers = await userSet.bulkAdd([userX, userY]);
 
         expect(addedUsers.length).toBe(2);
         expect(addedUsers.at(0)).toBe(userX);
         expect(addedUsers.at(1)).toBe(userY);
 
-        const sortedUsers = await userSet.where((u, fe) => fe.in(u.name, ['Mao', 'Dao'])).sortByAsc(e => e.name).findAll();
+        const sortedUsers = await userSet.where((u, fe) => fe.in(u.name, [nameX, nameY])).sortByAsc(e => e.position).findAll();
 
-        expect(sortedUsers.at(0)?.name).toBe('Dao');
-        expect(sortedUsers.at(1)?.name).toBe('Mao');
+        expect(sortedUsers.at(0)?.name).toBe(nameX);
+        expect(sortedUsers.at(1)?.name).toBe(nameY);
     });
 
     it('should sort existing entities in descending order', async () =>
     {
         const specEntityStore = new SpecEntityStore();
         const userSet = specEntityStore.userSet;
-        const userX = new User('Wao', 1);
-        const userY = new User('Uao', 2);
+        const nameX = generateRandomString();
+        const nameY = generateRandomString();
+        const userX = new User(nameX, 1);
+        const userY = new User(nameY, 2);
         const addedUsers = await userSet.bulkAdd([userX, userY]);
 
         expect(addedUsers.length).toBe(2);
         expect(addedUsers.at(0)).toBe(userX);
         expect(addedUsers.at(1)).toBe(userY);
 
-        const sortedUsers = await userSet.where((u, fe) => fe.in(u.name, ['Wao', 'Uao'])).sortByDesc(e => e.name).findAll();
+        const sortedUsers = await userSet.where((u, fe) => fe.in(u.name, [nameX, nameY])).sortByDesc(e => e.position).findAll();
 
-        expect(sortedUsers.at(0)?.name).toBe('Wao');
-        expect(sortedUsers.at(1)?.name).toBe('Uao');
+        expect(sortedUsers.at(0)?.name).toBe(nameY);
+        expect(sortedUsers.at(1)?.name).toBe(nameX);
+    });
+
+    it('should include to one relationship', async () =>
+    {
+        const specEntityStore = new SpecEntityStore();
+        const userStatusSet = specEntityStore.userStatusSet;
+        const userSet = specEntityStore.userSet;
+        const name = generateRandomString();
+        const userStatus = new UserStatus(name);
+        const addedUserStatus = await userStatusSet.add(userStatus);
+
+        expect(addedUserStatus).toBe(userStatus);
+
+        const user = new User(name, 1);
+
+        user.userStatus = addedUserStatus;
+
+        const addedUser = await userSet.add(user);
+
+        expect(addedUser.userStatus).toBe(addedUserStatus);
+
+        // const foundUser = await userSet.where((u, fe) => fe.eq(u.userStatus!.name, name)).include(u => u.userStatus).findOne();
+
+        // expect(foundUser?.userStatus).toBeDefined();
+        // expect(foundUser?.userStatus?.name).toBe(name);
+    });
+
+    it('should include to many relationship', async () =>
+    {
+        const specEntityStore = new SpecEntityStore();
+        const userSet = specEntityStore.userSet;
+        const messageSet = specEntityStore.messageSet;
+        const name = generateRandomString();
+        const user = new User(name, 1);
+        const addedUser = await userSet.add(user);
+
+        expect(addedUser).toBe(user);
+
+        const messageX = new Message(name, addedUser);
+        const messageY = new Message(name, addedUser);
+
+        const addedMessages = await messageSet.bulkAdd([messageX, messageY]);
+
+        expect(addedMessages.length).toBe(2);
+        expect(addedMessages.at(0)).toBe(messageX);
+        expect(addedMessages.at(1)).toBe(messageY);
+
+        const foundUser = await userSet.where((u, fe) => fe.eq(u.name, name)).includeCollection(u => u.messages).findOne();
+
+        expect(foundUser?.messages).toBeDefined();
+        expect(foundUser?.messages.length).toBe(2);
     });
 });

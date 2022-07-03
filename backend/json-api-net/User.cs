@@ -14,11 +14,11 @@ namespace JsonApiNet
 
         [HasOne]
         public UserStatus? UserStatus { get; set; }
-        public int UserStatusId { get; set; }
+        public int? UserStatusId { get; set; }
 
         [HasOne]
         public Company? Company { get; set; }
-        public int CompanyId { get; set; }
+        public int? CompanyId { get; set; }
 
         [HasMany]
         public IList<Message> Messages { get; set; }

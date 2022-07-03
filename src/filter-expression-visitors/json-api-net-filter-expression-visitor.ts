@@ -36,7 +36,7 @@ export class JsonApiNetFilterExpressionVisitor extends JsonApiFilterExpressionVi
         const propertyPath = eqFilterExpression.propertyInfo.extractSerializedPropertyPath().join('.');
         const value = this.formatValue(eqFilterExpression.propertyInfo, eqFilterExpression.value);
 
-        return encodeURIComponent(`equals(${propertyPath}, ${value})`);
+        return encodeURIComponent(`equals(${propertyPath},${value})`);
     }
 
     /**
@@ -51,7 +51,7 @@ export class JsonApiNetFilterExpressionVisitor extends JsonApiFilterExpressionVi
         const propertyPath = notEqFilterExpression.propertyInfo.extractSerializedPropertyPath().join('.');
         const value = this.formatValue(notEqFilterExpression.propertyInfo, notEqFilterExpression.value);
 
-        return encodeURIComponent(`not(equals(${propertyPath}, ${value}))`);
+        return encodeURIComponent(`not(equals(${propertyPath},${value}))`);
     }
     
     /**
@@ -66,7 +66,7 @@ export class JsonApiNetFilterExpressionVisitor extends JsonApiFilterExpressionVi
         const propertyPath = inFilterExpression.propertyInfo.extractSerializedPropertyPath().join('.');
         const value = inFilterExpression.values.map(v => this.formatValue(inFilterExpression.propertyInfo, v)).join(',');
         
-        return encodeURIComponent(`any(${propertyPath}, ${value}))`);
+        return encodeURIComponent(`any(${propertyPath},${value})`);
     }
 
     /**
@@ -81,7 +81,7 @@ export class JsonApiNetFilterExpressionVisitor extends JsonApiFilterExpressionVi
         const propertyPath = notInFilterExpression.propertyInfo.extractSerializedPropertyPath().join('.');
         const value = notInFilterExpression.values.map(v => this.formatValue(notInFilterExpression.propertyInfo, v)).join(',');
         
-        return encodeURIComponent(`not(any(${propertyPath}, ${value})))`);
+        return encodeURIComponent(`not(any(${propertyPath},${value}))`);
     }
 
     /**
@@ -96,7 +96,7 @@ export class JsonApiNetFilterExpressionVisitor extends JsonApiFilterExpressionVi
         const propertyPath = gtFilterExpression.propertyInfo.extractSerializedPropertyPath().join('.');
         const value = this.formatValue(gtFilterExpression.propertyInfo, gtFilterExpression.value);
 
-        return encodeURIComponent(`greaterThan(${propertyPath}, ${value})`);
+        return encodeURIComponent(`greaterThan(${propertyPath},${value})`);
     }
 
     /**
@@ -111,7 +111,7 @@ export class JsonApiNetFilterExpressionVisitor extends JsonApiFilterExpressionVi
         const propertyPath = gteFilterExpression.propertyInfo.extractSerializedPropertyPath().join('.');
         const value = this.formatValue(gteFilterExpression.propertyInfo, gteFilterExpression.value);
 
-        return encodeURIComponent(`greaterOrEqual(${propertyPath}, ${value})`);
+        return encodeURIComponent(`greaterOrEqual(${propertyPath},${value})`);
     }
 
     /**
@@ -126,7 +126,7 @@ export class JsonApiNetFilterExpressionVisitor extends JsonApiFilterExpressionVi
         const propertyPath = ltFilterExpression.propertyInfo.extractSerializedPropertyPath().join('.');
         const value = this.formatValue(ltFilterExpression.propertyInfo, ltFilterExpression.value);
 
-        return encodeURIComponent(`lessThan(${propertyPath}, ${value})`);
+        return encodeURIComponent(`lessThan(${propertyPath},${value})`);
     }
 
     /**
@@ -141,7 +141,7 @@ export class JsonApiNetFilterExpressionVisitor extends JsonApiFilterExpressionVi
         const propertyPath = lteFilterExpression.propertyInfo.extractSerializedPropertyPath().join('.');
         const value = this.formatValue(lteFilterExpression.propertyInfo, lteFilterExpression.value);
 
-        return encodeURIComponent(`lessOrEqual(${propertyPath}, ${value})`);
+        return encodeURIComponent(`lessOrEqual(${propertyPath},${value})`);
     }
 
     /**
@@ -156,7 +156,7 @@ export class JsonApiNetFilterExpressionVisitor extends JsonApiFilterExpressionVi
         const propertyPath = containsFilterExpression.propertyInfo.extractSerializedPropertyPath().join('.');
         const value = this.formatValue(containsFilterExpression.propertyInfo, containsFilterExpression.value);
 
-        return encodeURIComponent(`contains(${propertyPath}, ${value})`);
+        return encodeURIComponent(`contains(${propertyPath},${value})`);
     }
 
     /**
@@ -171,7 +171,7 @@ export class JsonApiNetFilterExpressionVisitor extends JsonApiFilterExpressionVi
         const propertyPath = notContainsFilterExpression.propertyInfo.extractSerializedPropertyPath().join('.');
         const value = this.formatValue(notContainsFilterExpression.propertyInfo, notContainsFilterExpression.value);
 
-        return encodeURIComponent(`not(contains(${propertyPath}, ${value}))`);
+        return encodeURIComponent(`not(contains(${propertyPath},${value}))`);
     }
 
     /**
@@ -186,7 +186,7 @@ export class JsonApiNetFilterExpressionVisitor extends JsonApiFilterExpressionVi
         const propertyPath = startsWithFilterExpression.propertyInfo.extractSerializedPropertyPath().join('.');
         const value = this.formatValue(startsWithFilterExpression.propertyInfo, startsWithFilterExpression.value);
 
-        return encodeURIComponent(`startsWith(${propertyPath}, ${value})`);
+        return encodeURIComponent(`startsWith(${propertyPath},${value})`);
     }
 
     /**
@@ -201,7 +201,7 @@ export class JsonApiNetFilterExpressionVisitor extends JsonApiFilterExpressionVi
         const propertyPath = notStartsWithFilterExpression.propertyInfo.extractSerializedPropertyPath().join('.');
         const value = this.formatValue(notStartsWithFilterExpression.propertyInfo, notStartsWithFilterExpression.value);
 
-        return encodeURIComponent(`not(startsWith(${propertyPath}, ${value}))`);
+        return encodeURIComponent(`not(startsWith(${propertyPath},${value}))`);
     }
 
     /**
@@ -216,7 +216,7 @@ export class JsonApiNetFilterExpressionVisitor extends JsonApiFilterExpressionVi
         const propertyPath = endsWithFilterExpression.propertyInfo.extractSerializedPropertyPath().join('.');
         const value = this.formatValue(endsWithFilterExpression.propertyInfo, endsWithFilterExpression.value);
 
-        return encodeURIComponent(`endsWith(${propertyPath}, ${value})`);
+        return encodeURIComponent(`endsWith(${propertyPath},${value})`);
     }
 
     /**
@@ -231,7 +231,7 @@ export class JsonApiNetFilterExpressionVisitor extends JsonApiFilterExpressionVi
         const propertyPath = notEndsWithFilterExpression.propertyInfo.extractSerializedPropertyPath().join('.');
         const value = this.formatValue(notEndsWithFilterExpression.propertyInfo, notEndsWithFilterExpression.value);
 
-        return encodeURIComponent(`not(endsWith(${propertyPath}, ${value}))`);
+        return encodeURIComponent(`not(endsWith(${propertyPath},${value}))`);
     }
 
     /**
