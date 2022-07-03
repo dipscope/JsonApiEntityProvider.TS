@@ -1,4 +1,8 @@
+import first from 'lodash/first';
 import isNil from 'lodash/isNil';
+import isString from 'lodash/isString';
+import merge from 'lodash/merge';
+import toString from 'lodash/toString';
 import { AddCommand, BatchRemoveCommand, BatchUpdateCommand, BrowseCommand } from '@dipscope/entity-store';
 import { BulkAddCommand, BulkQueryCommand, BulkRemoveCommand, BulkSaveCommand } from '@dipscope/entity-store';
 import { BulkUpdateCommand, QueryCommand, RemoveCommand, SaveCommand, UpdateCommand } from '@dipscope/entity-store';
@@ -100,7 +104,12 @@ export class JsonApiEntityProvider implements EntityProvider
         const responseDocumentObject = await this.jsonApiConnection.post(linkObject, requestDocumentObject);
         const responseEntity = this.jsonApiAdapter.createDocumentObjectEntity(typeMetadata, responseDocumentObject);
 
-        return responseEntity ?? requestEntity;
+        if (isNil(responseEntity))
+        {
+            return requestEntity;
+        }
+
+        return merge(requestEntity, responseEntity);
     }
 
     /**
@@ -142,11 +151,16 @@ export class JsonApiEntityProvider implements EntityProvider
         const typeMetadata = updateCommand.entityInfo.typeMetadata;
         const requestEntity = updateCommand.entity;
         const requestDocumentObject = this.jsonApiAdapter.createEntityDocumentObject(typeMetadata, requestEntity);
-        const linkObject = this.createResourceIdentifierLinkObject(typeMetadata, requestEntity.id);
+        const linkObject = this.createResourceIdentifierLinkObject(typeMetadata, requestEntity);
         const responseDocumentObject = await this.jsonApiConnection.patch(linkObject, requestDocumentObject);
         const responseEntity = this.jsonApiAdapter.createDocumentObjectEntity(typeMetadata, responseDocumentObject);
 
-        return responseEntity ?? requestEntity;
+        if (isNil(responseEntity))
+        {
+            return requestEntity;
+        }
+
+        return merge(requestEntity, responseEntity);
     }
 
     /**
@@ -199,8 +213,9 @@ export class JsonApiEntityProvider implements EntityProvider
     {
         const entityInfo = saveCommand.entityInfo;
         const entity = saveCommand.entity;
+        const resourceIdentifier = this.extractResourceIdentifier(entityInfo.typeMetadata, entity);
 
-        if (isNil(entity.id)) 
+        if (isNil(resourceIdentifier))
         {
             const addCommand = new AddCommand(entityInfo, entity);
 
@@ -246,9 +261,27 @@ export class JsonApiEntityProvider implements EntityProvider
      * 
      * @returns {Promise<Nullable<TEntity>>} Entity or null.
      */
-    public executeQueryCommand<TEntity extends Entity>(queryCommand: QueryCommand<TEntity>): Promise<Nullable<TEntity>>
+    public async executeQueryCommand<TEntity extends Entity>(queryCommand: QueryCommand<TEntity>): Promise<Nullable<TEntity>>
     {
-        throw new Error('Not implemented');
+        const keyValue = first(queryCommand.keyValues);
+
+        if (isNil(keyValue)) 
+        {
+            return null;
+        }
+
+        const typeMetadata = queryCommand.entityInfo.typeMetadata;
+        const resourceIdentifier = toString(keyValue);
+        const linkObject = this.createResourceIdentifierLinkObject(typeMetadata, resourceIdentifier);
+        const responseDocumentObject = await this.jsonApiConnection.get(linkObject);
+        const responseEntity = this.jsonApiAdapter.createDocumentObjectEntity(typeMetadata, responseDocumentObject);
+
+        if (isNil(responseEntity))
+        {
+            return null;
+        }
+
+        return responseEntity;
     }
 
     /**
@@ -279,7 +312,7 @@ export class JsonApiEntityProvider implements EntityProvider
     {
         const typeMetadata = removeCommand.entityInfo.typeMetadata;
         const requestEntity = removeCommand.entity;
-        const linkObject = this.createResourceIdentifierLinkObject(typeMetadata, requestEntity.id);
+        const linkObject = this.createResourceIdentifierLinkObject(typeMetadata, requestEntity);
 
         await this.jsonApiConnection.delete(linkObject);
 
@@ -324,7 +357,7 @@ export class JsonApiEntityProvider implements EntityProvider
     {
         throw new Error('Not supported');
     }
-    
+
     /**
      * Creates resource link object.
      * 
@@ -332,27 +365,51 @@ export class JsonApiEntityProvider implements EntityProvider
      *  
      * @returns {LinkObject} Link object.
      */
-    private createResourceLinkObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>): LinkObject
+    protected createResourceLinkObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>): LinkObject
     {
-        const jsonApiResourceMetadata = this.jsonApiAdapter.extractJsonApiResourceMetadataOrThrow(typeMetadata);
+        const jsonApiResourceMetadata = this.jsonApiAdapter.extractJsonApiResourceMetadataOrFail(typeMetadata);
         const linkObject = `${this.jsonApiConnection.baseUrl}/${jsonApiResourceMetadata.type}`;
+
+        return linkObject;
+    }
+    
+    /**
+     * Creates resource identifier link object.
+     * 
+     * @param {TypeMetadata<TEntity>} typeMetadata Type metadata.
+     * @param {TEntity} entity Entity.
+     * 
+     * @returns {LinkObject} Link object.
+     */
+    protected createResourceIdentifierLinkObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, entity: TEntity): LinkObject;
+    protected createResourceIdentifierLinkObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, identifier: string): LinkObject;
+    protected createResourceIdentifierLinkObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, entityOrIdentifier: TEntity | string): LinkObject
+    {
+        const resourceIdentifier = isString(entityOrIdentifier) ? entityOrIdentifier : toString(this.extractResourceIdentifier(typeMetadata, entityOrIdentifier));
+        const linkObject = `${this.createResourceLinkObject(typeMetadata)}/${resourceIdentifier}`;
 
         return linkObject;
     }
 
     /**
-     * Creates resource identifier link object.
+     * Extracts resource identifier.
      * 
      * @param {TypeMetadata<TEntity>} typeMetadata Type metadata.
-     * @param {string} id Resource id.
+     * @param {TEntity} entity Entity to extract identifier for.
      * 
-     * @returns {LinkObject} Link object.
+     * @returns {string|undefined} Resource identifier.
      */
-    private createResourceIdentifierLinkObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, id: string): LinkObject
+    protected extractResourceIdentifier<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, entity: TEntity): string | undefined
     {
-        const linkObject = `${this.createResourceLinkObject(typeMetadata)}/${id}`;
+        const jsonApiResourceMetadata = this.jsonApiAdapter.extractJsonApiResourceMetadataOrFail(typeMetadata);
+        const resourceIdentifier = entity[jsonApiResourceMetadata.id];
 
-        return linkObject;
+        if (isNil(resourceIdentifier))
+        {
+            return undefined;
+        }
+
+        return toString(resourceIdentifier);
     }
 
     /**
@@ -363,7 +420,7 @@ export class JsonApiEntityProvider implements EntityProvider
      * 
      * @returns {LinkObject} Link object.
      */
-    private createResourceBrowseLinkObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, browseCommand: BrowseCommand<any, any>): LinkObject
+    protected createResourceBrowseLinkObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, browseCommand: BrowseCommand<any, any>): LinkObject
     {
         let linkObject = this.createResourceLinkObject(typeMetadata);
 

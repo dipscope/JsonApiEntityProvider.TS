@@ -1,7 +1,5 @@
 import isNil from 'lodash/isNil';
-
 import { PaginateExpression } from '@dipscope/entity-store';
-
 import { JsonApiPaginateExpressionVisitor } from '../json-api-paginate-expression-visitor';
 
 /**

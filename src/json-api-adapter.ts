@@ -48,7 +48,7 @@ export class JsonApiAdapter
      * 
      * @returns {JsonApiResourceMetadata<TEntity>} Json api resource metadata.
      */
-    private extractJsonApiResourceMetadataOrFail<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>): JsonApiResourceMetadata<TEntity>
+    public extractJsonApiResourceMetadataOrFail<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>): JsonApiResourceMetadata<TEntity>
     {
         const jsonApiResourceMetadata = this.extractJsonApiResourceMetadata(typeMetadata);
 
@@ -67,7 +67,7 @@ export class JsonApiAdapter
      * 
      * @returns {JsonApiResourceMetadata<TEntity>|undefined} Json api resource metadata or undefined if metadata is not present.
      */
-    private extractJsonApiResourceMetadata<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>): JsonApiResourceMetadata<TEntity> | undefined
+    public extractJsonApiResourceMetadata<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>): JsonApiResourceMetadata<TEntity> | undefined
     {
         const jsonApiResourceMetadata = JsonApiResourceManager.extractJsonApiResourceMetadataFromTypeMetadata(typeMetadata);
 

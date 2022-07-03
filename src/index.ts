@@ -12,6 +12,7 @@ export * from './json-api-filter-expression-visitor';
 export * from './json-api-include-expression-visitor';
 export * from './json-api-paginate-expression-visitor';
 export * from './json-api-request-interceptor';
+export * from './json-api-resource-id';
 export * from './json-api-resource-manager';
 export * from './json-api-resource-metadata-key';
 export * from './json-api-resource-metadata';
