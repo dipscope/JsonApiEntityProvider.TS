@@ -8,6 +8,9 @@ import toString from 'lodash/toString';
 import { Entity, EntityCollection, Nullable } from '@dipscope/entity-store';
 import { PropertyMetadata, ReferenceCallback, TypeMetadata } from '@dipscope/type-manager';
 import { ReferenceKey, ReferenceValue, SerializerContext } from '@dipscope/type-manager';
+import { JsonApiConnection } from './json-api-connection';
+import { JsonApiMetadataExtractor } from './json-api-metadata-extractor';
+import { JsonApiPaginatedEntityCollection } from './json-api-paginated-entity-collection';
 import { JsonApiResourceManager } from './json-api-resource-manager';
 import { JsonApiResourceMetadata } from './json-api-resource-metadata';
 import { JsonApiResourceMetadataNotFoundError } from './json-api-resource-metadata-not-found-error';
@@ -26,22 +29,61 @@ import { ResourceObject } from './types/resource-object';
 export class JsonApiAdapter
 {
     /**
+     * Json api connection.
+     * 
+     * @type {JsonApiConnection}
+     */
+    public readonly jsonApiConnection: JsonApiConnection;
+
+    /**
+     * Json api metadata extractor.
+     * 
+     * @type {JsonApiMetadataExtractor}
+     */
+    public readonly jsonApiMetadataExtractor: JsonApiMetadataExtractor;
+
+    /**
      * Allow to many relationship replacement?
      * 
      * @type {boolean}
      */
     public readonly allowToManyRelationshipReplacement: boolean;
-    
+
     /**
      * Constructor.
      * 
+     * @param {JsonApiConnection} jsonApiConnection Json api connection.
+     * @param {JsonApiMetadataExtractor} jsonApiMetadataExtractor Json api metadata extractor.
      * @param {boolean} allowToManyRelationshipReplacement Allow to many relationship replacement?
      */
-    public constructor(allowToManyRelationshipReplacement: boolean)
+    public constructor(
+        jsonApiConnection: JsonApiConnection, 
+        jsonApiMetadataExtractor: JsonApiMetadataExtractor, 
+        allowToManyRelationshipReplacement: boolean
+    )
     {
+        this.jsonApiConnection = jsonApiConnection;
+        this.jsonApiMetadataExtractor = jsonApiMetadataExtractor;
         this.allowToManyRelationshipReplacement = allowToManyRelationshipReplacement;
 
         return;
+    }
+
+    /**
+     * Creates serializer context for object.
+     * 
+     * @param {TypeMetadata<TEntity>} typeMetadata Type metadata.
+     * @param {any} x Root object.
+     * 
+     * @returns {SerializerContext<TEntity>} Entity serializer context.
+     */
+    private createSerializerContext<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, x: any): SerializerContext<TEntity>
+    {
+        return new SerializerContext(x, new WeakMap<ReferenceKey, Array<ReferenceCallback>>(), new WeakMap<ReferenceKey, ReferenceValue>(), 
+        {
+            jsonPathKey: '$',
+            typeMetadata: typeMetadata
+        });
     }
 
     /**
@@ -75,27 +117,6 @@ export class JsonApiAdapter
         const jsonApiResourceMetadata = JsonApiResourceManager.extractJsonApiResourceMetadataFromTypeMetadata(typeMetadata);
 
         return jsonApiResourceMetadata;
-    }
-
-    /**
-     * Creates serializer context for object.
-     * 
-     * @param {TypeMetadata<TEntity>} typeMetadata Type metadata.
-     * @param {any} x Root object.
-     * 
-     * @returns {SerializerContext<TEntity>} Entity serializer context.
-     */
-    private createSerializerContext<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, x: any): SerializerContext<TEntity>
-    {
-        const serializerContext = new SerializerContext({
-            $: x,
-            path: '$',
-            typeMetadata: typeMetadata,
-            referenceCallbackMap: new WeakMap<ReferenceKey, Array<ReferenceCallback>>(),
-            referenceMap: new WeakMap<ReferenceKey, ReferenceValue>()
-        });
-
-        return serializerContext;
     }
 
     /**
@@ -341,6 +362,28 @@ export class JsonApiAdapter
         const entity = isNil(resourceObject) ? null : this.createResourceObjectEntity(typeMetadata, resourceObject, includedResourceObjects);
 
         return entity;
+    }
+
+    /**
+     * Creates paginated entity collection from a document object.
+     * 
+     * @param {TypeMetadata<TEntity>} typeMetadata Type metadata.
+     * @param {DocumentObject} documentObject Document object.
+     * 
+     * @returns {EntityCollection<TEntity>} Entity collection created from document object.
+     */
+    public createDocumentObjectPaginatedEntityCollection<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, documentObject: DocumentObject): JsonApiPaginatedEntityCollection<TEntity>
+    {
+        const entityCollection = this.createDocumentObjectEntityCollection(typeMetadata, documentObject);
+        const totalLength = this.jsonApiMetadataExtractor.extractTotalEntityCount(documentObject);
+        const links = documentObject.links ?? {};
+        const firstLinkObject = links.first;
+        const lastLinkObject = links.last;
+        const nextLinkObject = links.next;
+        const prevLinkObject = links.prev;
+        const paginatedEntityCollection = new JsonApiPaginatedEntityCollection(entityCollection, typeMetadata, this, totalLength, firstLinkObject, lastLinkObject, nextLinkObject, prevLinkObject);
+
+        return paginatedEntityCollection;
     }
 
     /**

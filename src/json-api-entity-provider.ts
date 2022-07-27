@@ -3,7 +3,7 @@ import isNil from 'lodash/isNil';
 import isString from 'lodash/isString';
 import merge from 'lodash/merge';
 import toString from 'lodash/toString';
-import { AddCommand, BatchRemoveCommand, BatchUpdateCommand, BrowseCommand } from '@dipscope/entity-store';
+import { AddCommand, BatchRemoveCommand, BatchUpdateCommand, BrowseCommand, CommandNotSupportedError, PaginatedEntityCollection } from '@dipscope/entity-store';
 import { BulkAddCommand, BulkQueryCommand, BulkRemoveCommand, BulkSaveCommand } from '@dipscope/entity-store';
 import { BulkUpdateCommand, QueryCommand, RemoveCommand, SaveCommand, UpdateCommand } from '@dipscope/entity-store';
 import { Entity, EntityCollection, EntityProvider, Nullable } from '@dipscope/entity-store';
@@ -14,9 +14,11 @@ import { JsonApiConnection } from './json-api-connection';
 import { JsonApiEntityProviderOptions } from './json-api-entity-provider-options';
 import { JsonApiFilterExpressionVisitor } from './json-api-filter-expression-visitor';
 import { JsonApiIncludeExpressionVisitor } from './json-api-include-expression-visitor';
+import { JsonApiMetadataExtractor } from './json-api-metadata-extractor';
 import { JsonApiPaginateExpressionVisitor } from './json-api-paginate-expression-visitor';
 import { JsonApiSortExpressionVisitor } from './json-api-sort-expression-visitor';
-import { OffsetBasedPaginateExpressionVisitor } from './paginate-expression-visitors/offset-based-paginate-expression-visitor';
+import { JsonApiNetMetadataExtractor } from './metadata-extractors/json-api-net-metadata-extractor';
+import { JsonApiNetPaginateExpressionVisitor } from './paginate-expression-visitors/json-api-net-paginate-expression-visitor';
 import { LinkObject } from './types/link-object';
 
 /**
@@ -32,6 +34,13 @@ export class JsonApiEntityProvider implements EntityProvider
      * @type {JsonApiConnection}
      */
     public readonly jsonApiConnection: JsonApiConnection;
+
+    /**
+     * Metadata extractor to related info.
+     * 
+     * @type {JsonApiMetadataExtractor}
+     */
+    public readonly jsonApiMetadataExtractor: JsonApiMetadataExtractor;
 
     /**
      * Filter expression visitor used to transform entity store commands.
@@ -77,14 +86,16 @@ export class JsonApiEntityProvider implements EntityProvider
     {
         const defaultJsonApiRequestInterceptor = (request: Request) => request;
         const jsonApiRequestInterceptor = jsonApiEntityProviderOptions.jsonApiRequestInterceptor ?? defaultJsonApiRequestInterceptor;
+        const allowToManyRelationshipReplacement = jsonApiEntityProviderOptions.allowToManyRelationshipReplacement ?? false;
 
         this.jsonApiConnection = new JsonApiConnection(jsonApiEntityProviderOptions.baseUrl, jsonApiRequestInterceptor);
+        this.jsonApiMetadataExtractor = jsonApiEntityProviderOptions.jsonApiMetadataExtractor ?? new JsonApiNetMetadataExtractor();
         this.jsonApiFilterExpressionVisitor = jsonApiEntityProviderOptions.jsonApiFilterExpressionVisitor ?? new JsonApiNetFilterExpressionVisitor();
-        this.jsonApiPaginateExpressionVisitor = jsonApiEntityProviderOptions.jsonApiPaginateExpressionVisitor ?? new OffsetBasedPaginateExpressionVisitor();
+        this.jsonApiPaginateExpressionVisitor = jsonApiEntityProviderOptions.jsonApiPaginateExpressionVisitor ?? new JsonApiNetPaginateExpressionVisitor();
         this.jsonApiSortExpressionVisitor = new JsonApiSortExpressionVisitor();
         this.jsonApiIncludeExpressionVisitor = new JsonApiIncludeExpressionVisitor();
-        this.jsonApiAdapter = new JsonApiAdapter(jsonApiEntityProviderOptions.allowToManyRelationshipReplacement ?? false);
-        
+        this.jsonApiAdapter = new JsonApiAdapter(this.jsonApiConnection, this.jsonApiMetadataExtractor, allowToManyRelationshipReplacement);
+
         return;
     }
 
@@ -199,7 +210,7 @@ export class JsonApiEntityProvider implements EntityProvider
      */
     public executeBatchUpdateCommand<TEntity extends Entity>(batchUpdateCommand: BatchUpdateCommand<TEntity>): Promise<void>
     {
-        throw new Error('Not supported');
+        throw new CommandNotSupportedError(batchUpdateCommand, this);
     }
 
     /**
@@ -289,15 +300,15 @@ export class JsonApiEntityProvider implements EntityProvider
      * 
      * @param {BulkQueryCommand<TEntity>} bulkQueryCommand Bulk query command.
      * 
-     * @returns {Promise<EntityCollection<TEntity>>} Queried entity collection.
+     * @returns {Promise<PaginatedEntityCollection<TEntity>>} Queried entity collection.
      */
-    public async executeBulkQueryCommand<TEntity extends Entity>(bulkQueryCommand: BulkQueryCommand<TEntity>): Promise<EntityCollection<TEntity>>
+    public async executeBulkQueryCommand<TEntity extends Entity>(bulkQueryCommand: BulkQueryCommand<TEntity>): Promise<PaginatedEntityCollection<TEntity>>
     {
         const typeMetadata = bulkQueryCommand.entityInfo.typeMetadata;
         const linkObject = this.createResourceBrowseLinkObject(typeMetadata, bulkQueryCommand);
         const responseDocumentObject = await this.jsonApiConnection.get(linkObject);
-        const responseEntityCollection = this.jsonApiAdapter.createDocumentObjectEntityCollection(typeMetadata, responseDocumentObject);
-
+        const responseEntityCollection = this.jsonApiAdapter.createDocumentObjectPaginatedEntityCollection(typeMetadata, responseDocumentObject);
+        
         return responseEntityCollection;
     }
 
@@ -345,7 +356,7 @@ export class JsonApiEntityProvider implements EntityProvider
 
         return responseEntityCollection;
     }
-
+    
     /**
      * Executes batch remove command.
      * 
@@ -355,7 +366,7 @@ export class JsonApiEntityProvider implements EntityProvider
      */
     public executeBatchRemoveCommand<TEntity extends Entity>(batchRemoveCommand: BatchRemoveCommand<TEntity>): Promise<void>
     {
-        throw new Error('Not supported');
+        throw new CommandNotSupportedError(batchRemoveCommand, this);
     }
 
     /**

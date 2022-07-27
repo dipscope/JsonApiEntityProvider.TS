@@ -1,6 +1,6 @@
 import { EntityCollection, EntitySet, EntityStore } from '@dipscope/entity-store';
 import { Inject, Property, Type } from '@dipscope/type-manager';
-import { JsonApiEntityProvider, JsonApiNetFilterExpressionVisitor, JsonApiResource, PageBasedPaginateExpressionVisitor } from '../src';
+import { JsonApiEntityProvider, JsonApiNetFilterExpressionVisitor, JsonApiNetMetadataExtractor, JsonApiNetPaginateExpressionVisitor, JsonApiResource } from '../src';
 
 @Type()
 class JsonApiEntity
@@ -107,7 +107,8 @@ class SpecEntityStore extends EntityStore
         super(new JsonApiEntityProvider({
             baseUrl: 'http://localhost:20001',
             jsonApiFilterExpressionVisitor: new JsonApiNetFilterExpressionVisitor(),
-            jsonApiPaginateExpressionVisitor: new PageBasedPaginateExpressionVisitor(),
+            jsonApiPaginateExpressionVisitor: new JsonApiNetPaginateExpressionVisitor(),
+            jsonApiMetadataExtractor: new JsonApiNetMetadataExtractor(),
             allowToManyRelationshipReplacement: true
         }));
 
@@ -160,7 +161,7 @@ describe('Json api entity provider', () =>
 
         expect(updatedUser).toBe(user);
 
-        const foundUser = await userSet.where((u, fe) => fe.eq(u.name, `${name}Updated`)).findOne();
+        const foundUser = await userSet.filter((u, fe) => fe.eq(u.name, `${name}Updated`)).findOne();
 
         expect(foundUser).not.toBeNull();
     });
@@ -175,7 +176,7 @@ describe('Json api entity provider', () =>
 
         expect(addedUser).toBe(user);
 
-        const foundAddedUser = await userSet.where((u, fe) => fe.eq(u.name, name)).findOne();
+        const foundAddedUser = await userSet.filter((u, fe) => fe.eq(u.name, name)).findOne();
 
         expect(foundAddedUser).not.toBeNull();
 
@@ -185,7 +186,7 @@ describe('Json api entity provider', () =>
 
         expect(updatedUser).toBe(user);
 
-        const foundUpdatedUser = await userSet.where((u, fe) => fe.eq(u.name, `${name}Updated`)).findOne();
+        const foundUpdatedUser = await userSet.filter((u, fe) => fe.eq(u.name, `${name}Updated`)).findOne();
 
         expect(foundUpdatedUser).not.toBeNull();
     });
@@ -200,7 +201,7 @@ describe('Json api entity provider', () =>
 
         expect(addedUser).toBe(user);
 
-        const foundAddedUser = await userSet.where((u, fe) => fe.eq(u.name, name)).findOne();
+        const foundAddedUser = await userSet.filter((u, fe) => fe.eq(u.name, name)).findOne();
 
         expect(foundAddedUser).not.toBeNull();
 
@@ -208,7 +209,7 @@ describe('Json api entity provider', () =>
 
         expect(removedUser).toBe(user);
 
-        const foundUser = await userSet.where((u, fe) => fe.eq(u.name, name)).findOne();
+        const foundUser = await userSet.filter((u, fe) => fe.eq(u.name, name)).findOne();
 
         expect(foundUser).toBeNull();
     });
@@ -222,7 +223,7 @@ describe('Json api entity provider', () =>
         const userX = new User(nameX, 1);
         const userY = new User(nameY, 2);
         const addedUsers = await userSet.bulkAdd([userX, userY]);
-        const foundUsers = await userSet.where((u, fe) => fe.in(u.name, [nameX, nameY])).findAll();
+        const foundUsers = await userSet.filter((u, fe) => fe.in(u.name, [nameX, nameY])).findAll();
 
         expect(addedUsers.length).toBe(2);
         expect(addedUsers.at(0)).toBe(userX);
@@ -253,7 +254,7 @@ describe('Json api entity provider', () =>
         expect(updatedUsers.at(0)).toBe(userX);
         expect(updatedUsers.at(1)).toBe(userY);
 
-        const foundUsers = await userSet.where((u, fe) => fe.in(u.name, [`${nameX}Updated`, `${nameY}Updated`])).findAll();
+        const foundUsers = await userSet.filter((u, fe) => fe.in(u.name, [`${nameX}Updated`, `${nameY}Updated`])).findAll();
 
         expect(foundUsers.length).toBe(2);
     });
@@ -272,7 +273,7 @@ describe('Json api entity provider', () =>
         expect(addedUsers.at(0)).toBe(userX);
         expect(addedUsers.at(1)).toBe(userY);
 
-        const foundAddedUsers = await userSet.where((u, fe) => fe.in(u.name, [nameX, nameY])).findAll();
+        const foundAddedUsers = await userSet.filter((u, fe) => fe.in(u.name, [nameX, nameY])).findAll();
 
         expect(foundAddedUsers.length).toBe(2);
 
@@ -285,7 +286,7 @@ describe('Json api entity provider', () =>
         expect(updatedUsers.at(0)).toBe(userX);
         expect(updatedUsers.at(1)).toBe(userY);
 
-        const foundUsers = await userSet.where((u, fe) => fe.in(u.name, [`${nameX}Updated`, `${nameY}Updated`])).findAll();
+        const foundUsers = await userSet.filter((u, fe) => fe.in(u.name, [`${nameX}Updated`, `${nameY}Updated`])).findAll();
 
         expect(foundUsers.length).toBe(2);
     });
@@ -310,7 +311,7 @@ describe('Json api entity provider', () =>
         expect(removedUsers.at(0)).toBe(userX);
         expect(removedUsers.at(1)).toBe(userY);
 
-        const foundUsers = await userSet.where((u, fe) => fe.in(u.name, [nameX, nameY])).findAll();
+        const foundUsers = await userSet.filter((u, fe) => fe.in(u.name, [nameX, nameY])).findAll();
 
         expect(foundUsers.length).toBe(0);
     });
@@ -329,7 +330,7 @@ describe('Json api entity provider', () =>
         expect(addedUsers.at(0)).toBe(userX);
         expect(addedUsers.at(1)).toBe(userY);
 
-        const sortedUsers = await userSet.where((u, fe) => fe.in(u.name, [nameX, nameY])).sortByAsc(e => e.position).findAll();
+        const sortedUsers = await userSet.filter((u, fe) => fe.in(u.name, [nameX, nameY])).sortByAsc(e => e.position).findAll();
 
         expect(sortedUsers.at(0)?.name).toBe(nameX);
         expect(sortedUsers.at(1)?.name).toBe(nameY);
@@ -349,7 +350,7 @@ describe('Json api entity provider', () =>
         expect(addedUsers.at(0)).toBe(userX);
         expect(addedUsers.at(1)).toBe(userY);
 
-        const sortedUsers = await userSet.where((u, fe) => fe.in(u.name, [nameX, nameY])).sortByDesc(e => e.position).findAll();
+        const sortedUsers = await userSet.filter((u, fe) => fe.in(u.name, [nameX, nameY])).sortByDesc(e => e.position).findAll();
 
         expect(sortedUsers.at(0)?.name).toBe(nameY);
         expect(sortedUsers.at(1)?.name).toBe(nameX);
@@ -374,10 +375,10 @@ describe('Json api entity provider', () =>
 
         expect(addedUser.userStatus).toBe(addedUserStatus);
 
-        // const foundUser = await userSet.where((u, fe) => fe.eq(u.userStatus!.name, name)).include(u => u.userStatus).findOne();
+        const foundUser = await userSet.filter((u, fe) => fe.eq(u.userStatus.name, name)).include(u => u.userStatus).findOne();
 
-        // expect(foundUser?.userStatus).toBeDefined();
-        // expect(foundUser?.userStatus?.name).toBe(name);
+        expect(foundUser?.userStatus).toBeDefined();
+        expect(foundUser?.userStatus?.name).toBe(name);
     });
 
     it('should include to many relationship', async () =>
@@ -400,7 +401,7 @@ describe('Json api entity provider', () =>
         expect(addedMessages.at(0)).toBe(messageX);
         expect(addedMessages.at(1)).toBe(messageY);
 
-        const foundUser = await userSet.where((u, fe) => fe.eq(u.name, name)).includeCollection(u => u.messages).findOne();
+        const foundUser = await userSet.filter((u, fe) => fe.eq(u.name, name)).includeCollection(u => u.messages).findOne();
 
         expect(foundUser?.messages).toBeDefined();
         expect(foundUser?.messages.length).toBe(2);

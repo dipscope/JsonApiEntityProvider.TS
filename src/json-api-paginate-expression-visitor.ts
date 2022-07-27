@@ -1,4 +1,4 @@
-import { PaginateExpression, PaginateExpressionVisitor } from '@dipscope/entity-store';
+import { CursorPaginateExpression, OffsetPaginateExpression, PaginateExpressionVisitor, SizePaginateExpression } from '@dipscope/entity-store';
 import { JsonApiExpressionVisitor } from './json-api-expression-visitor';
 
 /**
@@ -21,11 +21,29 @@ export abstract class JsonApiPaginateExpressionVisitor extends JsonApiExpression
     }
 
     /**
-     * Visits paginate expression.
-     * 
-     * @param {PaginateExpression} paginateExpression Paginate expression.
-     * 
+     * Visits cursor paginate expression.
+     *
+     * @param {CursorPaginateExpression} cursorPaginateExpression Cursor paginate expression.
+     *
      * @returns {string} Expression result.
      */
-    public abstract visitPaginateExpression(paginateExpression: PaginateExpression): string;
+    public abstract visitCursorPaginateExpression(cursorPaginateExpression: CursorPaginateExpression): string;
+
+    /**
+     * Visits offset paginate expression.
+     *
+     * @param {OffsetPaginateExpression} offsetPaginateExpression Offset paginate expression.
+     *
+     * @returns {string} Expression result.
+     */
+    public abstract visitOffsetPaginateExpression(offsetPaginateExpression: OffsetPaginateExpression): string;
+
+    /**
+     * Visits size paginate expression.
+     *
+     * @param {SizePaginateExpression} sizePaginateExpression Size paginate expression.
+     *
+     * @returns {string} Expression result.
+     */
+    public abstract visitSizePaginateExpression(sizePaginateExpression: SizePaginateExpression): string;
 }
