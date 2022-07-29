@@ -1,6 +1,6 @@
 # JsonApiEntityProvider.TS
 
-![GitHub](https://img.shields.io/github/license/dipscope/JsonApiEntityProvider.TS) ![NPM](https://img.shields.io/npm/v/@dipscope/in-memory-entity-provider) ![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)
+![GitHub](https://img.shields.io/github/license/dipscope/JsonApiEntityProvider.TS) ![NPM](https://img.shields.io/npm/v/@dipscope/json-api-entity-provider) ![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)
 
 `JsonApiEntityProvider.TS` is an implementation of `EntityProvider` for `EntityStore.TS` package. You can find detailed information on the [project page](https://github.com/dipscope/EntityStore.TS).
 
@@ -21,49 +21,51 @@ If you like or are using this project please give it a star. Thanks!
 
 ## What issues it solves?
 
-`JsonApi` entity provider is implementation of [JSON:API](https://jsonapi.org) specification. It allows you easily connect to any backend API which follows described conventions.
+`JsonApi` entity provider aims to cover [JSON:API](https://jsonapi.org) specification. It supports the latest version (v1.0) and allows you easily connect to any backend API which follows described conventions. Besides it provides you extension points for different filtering and pagination strategies which might be used by a server.
 
 ## Installation
 
 `JsonApiEntityProvider.TS` is available from NPM, both for browser (e.g. using webpack) and NodeJS:
 
 ```
-npm i @dipscope/in-memory-entity-provider
+npm i @dipscope/json-api-entity-provider
 ```
 
 _This package is a plugin for `EntityStore.TS` package. Please [read documentation](https://github.com/dipscope/EntityStore.TS) after installation._
 
 ## Configuration
 
-This provider require configuration as some parts of specification are agnostic about the filter and pagination strategies supported by a server.
+First step is to create a provider and pass options you want to apply.
 
 ```typescript
 import { JsonApiEntityProvider, JsonApiEntityProviderOptions } from '@dipscope/json-api-entity-provider';
+import { JsonApiNetFilterExpressionVisitor, JsonApiNetPaginateExpressionVisitor } from '@dipscope/json-api-entity-provider';
 import { AppEntityStore } from './app';
 
 // Create entity provider.
 const jsonApiEntityProvider = new JsonApiEntityProvider({
-    baseUrl: ..., // Url to you backend endpoint.
-    jsonApiRequestInterceptor: ..., // You might intercept requests by adding headers. 
-    jsonApiFilterExpressionVisitor: ..., // You might override filtering strategy used by a server.
-    jsonApiPaginateExpressionVisitor: ..., // You might override pagination strategy used by a server.
-}); 
+    baseUrl: 'http://localhost:20001', // Url to you backend endpoint.
+    jsonApiRequestInterceptor: (request: Request) => request, // You might intercept requests by adding headers. 
+    jsonApiFilterExpressionVisitor: new JsonApiNetFilterExpressionVisitor(), // You might override filtering strategy used by a server.
+    jsonApiPaginateExpressionVisitor: new JsonApiNetPaginateExpressionVisitor(), // You might override pagination strategy used by a server.
+    ... // Other options to override.
+});
 
 // Create entity store.
 const appEntityStore = new AppEntityStore(jsonApiEntityProvider);
 ```
 
-Besides as [JSON:API](https://jsonapi.org) specification require usage of resource type associated with each entity you have to specify one.
+Second step is to define resource configuration for your entities as required by [JSON:API](https://jsonapi.org) specification.
 
 ```typescript
 import { Type, Property } from '@dipscope/type-manager';
 import { EntityCollection } from '@dipscope/entity-store';
-import { JsonApiResourceType } from '@dipscope/json-api-entity-provider';
+import { JsonApiResource } from '@dipscope/json-api-entity-provider';
 import { Company, Message } from './app/entities';
 
 @Type()
 @JsonApiResource({
-    type: 'users'
+    type: 'users' // Specify resource type.
 })
 export class User
 {
@@ -77,7 +79,7 @@ export class User
 }
 ```
 
-Supported methods which you can use through `EntitySet` is dependent from backend implementation of [JSON:API](https://jsonapi.org) specification. We defined only configuration part in examples above but there might be more information required like creation of custom filter expression visitor. Currently it is not clear which parts we have to describe. Feel free to open an issue if you require more information.
+After that you have to follow `EntityStore.TS` [documentation](https://github.com/dipscope/EntityStore.TS). Supported methods which you can use through `EntitySet` is dependent from backend implementation of [JSON:API](https://jsonapi.org) specification.
 
 ## Versioning
 
