@@ -406,4 +406,33 @@ describe('Json api entity provider', () =>
         expect(foundUser?.messages).toBeDefined();
         expect(foundUser?.messages.length).toBe(2);
     });
+
+    it('should paginate existing entities', async () =>
+    {
+        const specEntityStore = new SpecEntityStore();
+        const userSet = specEntityStore.userSet;
+        const nameX = generateRandomString();
+        const nameY = generateRandomString();
+        const nameZ = generateRandomString();
+        const userX = new User(nameX, 1);
+        const userY = new User(nameY, 2);
+        const userZ = new User(nameZ, 3);
+        const addedUsers = await userSet.bulkAdd([userX, userY, userZ]);
+
+        expect(addedUsers.length).toBe(3);
+
+        const paginatedUsers = await userSet.filter((u, fe) => fe.in(u.name, [nameX, nameY, nameZ])).paginate(p => p.size(2)).findAll();
+
+        expect(paginatedUsers.totalLength).toBe(3);
+        expect(paginatedUsers.length).toBe(2);
+        expect(paginatedUsers.hasNextPage()).toBeTrue();
+        expect(paginatedUsers.hasPrevPage()).toBeFalse();
+
+        const nextPaginatedUsers = await paginatedUsers.nextPage();
+
+        expect(nextPaginatedUsers.totalLength).toBe(3);
+        expect(nextPaginatedUsers.length).toBe(1);
+        expect(nextPaginatedUsers.hasNextPage()).toBeFalse();
+        expect(nextPaginatedUsers.hasPrevPage()).toBeTrue();
+    });
 });

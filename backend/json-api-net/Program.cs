@@ -4,7 +4,7 @@ using JsonApiNet;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>();
-builder.Services.AddJsonApi<AppDbContext>();
+builder.Services.AddJsonApi<AppDbContext>(o => o.IncludeTotalResourceCount = true);
 builder.Services.AddCors(options => options.AddDefaultPolicy(policy => policy.WithOrigins("*").AllowAnyHeader().AllowAnyMethod()));
 builder.Services.AddControllers();
 

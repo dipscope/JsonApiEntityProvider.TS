@@ -1,5 +1,5 @@
 import isNil from 'lodash/isNil';
-import { Entity, EntityCollection, PaginatedEntityCollection } from '@dipscope/entity-store';
+import { Entity, EntityCollectionLike, PaginatedEntityCollection } from '@dipscope/entity-store';
 import { TypeMetadata } from '@dipscope/type-manager';
 import { JsonApiAdapter } from './json-api-adapter';
 import { LinkObject } from './types/link-object';
@@ -56,7 +56,7 @@ export class JsonApiPaginatedEntityCollection<TEntity extends Entity> extends Pa
     /**
      * Constructor.
      * 
-     * @param {EntityCollection<TEntity>|Array<TEntity>} entityCollectionOrEntities Entity collection or entities.
+     * @param {EntityCollectionLike<TEntity>} entityCollectionLike Entity collection like.
      * @param {TypeMetadata<TEntity>} typeMetadata Entity type metadata.
      * @param {JsonApiAdapter} jsonApiAdapter Json api adapter.
      * @param {number} totalLength Total length.
@@ -66,7 +66,7 @@ export class JsonApiPaginatedEntityCollection<TEntity extends Entity> extends Pa
      * @param {LinkObject} prevLinkObject Prev link object.
      */
     public constructor(
-        entityCollectionOrEntities: EntityCollection<TEntity>|Array<TEntity>,
+        entityCollectionLike: EntityCollectionLike<TEntity>,
         typeMetadata: TypeMetadata<TEntity>,
         jsonApiAdapter: JsonApiAdapter,
         totalLength?: number,
@@ -76,7 +76,7 @@ export class JsonApiPaginatedEntityCollection<TEntity extends Entity> extends Pa
         prevLinkObject?: LinkObject
     ) 
     {
-        super(entityCollectionOrEntities, totalLength);
+        super(entityCollectionLike, totalLength);
 
         this.typeMetadata = typeMetadata;
         this.jsonApiAdapter = jsonApiAdapter;
