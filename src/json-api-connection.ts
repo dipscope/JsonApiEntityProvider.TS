@@ -1,3 +1,4 @@
+import fetch, { Headers, Request } from 'cross-fetch';
 import isString from 'lodash/isString';
 import { ConflictJsonApiError } from './errors/conflict-json-api-error';
 import { ForbiddenJsonApiError } from './errors/forbidden-json-api-error';

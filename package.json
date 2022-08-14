@@ -2,12 +2,14 @@
   "author": "DipScope authors and contributors",
   "dependencies": {
     "@dipscope/entity-store": "^1.0.0",
+    "cross-fetch": "^3.1.5",
     "lodash": "^4.17.21"
   },
   "description": "Json api entity provider for entity store.",
   "devDependencies": {
     "@types/jasmine": "^3.6.3",
     "@types/lodash": "^4.14.182",
+    "@types/node": "^18.7.3",
     "@typescript-eslint/eslint-plugin": "^4.14.2",
     "@typescript-eslint/parser": "^4.14.2",
     "circular-dependency-plugin": "^5.2.2",
@@ -33,6 +35,7 @@
   ],
   "license": "Apache-2.0",
   "main": "index.js",
+  "browser": "index.browser.js",
   "name": "@dipscope/json-api-entity-provider",
   "repository": {
     "type": "git",
