@@ -1,10 +1,4 @@
-import isArray from 'lodash/isArray';
-import isEmpty from 'lodash/isEmpty';
-import isNil from 'lodash/isNil';
-import isNull from 'lodash/isNull';
-import isUndefined from 'lodash/isUndefined';
-import toNumber from 'lodash/toNumber';
-import toString from 'lodash/toString';
+import { isArray, isEmpty, isNil, isNull, isUndefined, toNumber, toString } from 'lodash';
 import { Entity, EntityCollection, Nullable } from '@dipscope/entity-store';
 import { PropertyMetadata, ReferenceCallback, TypeMetadata } from '@dipscope/type-manager';
 import { ReferenceKey, ReferenceValue, SerializerContext } from '@dipscope/type-manager';

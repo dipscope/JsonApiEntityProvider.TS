@@ -3,7 +3,7 @@ const CircularDependencyPlugin = require('circular-dependency-plugin');
 
 module.exports = [{
     mode: 'production',
-    devtool: false,
+    devtool: 'source-map',
     target: 'node',
     entry: {
         index: './src/index.ts'
@@ -17,17 +17,23 @@ module.exports = [{
         umdNamedDefine: true
     },
     externals: {
+        'lodash': {
+            commonjs: 'lodash',
+            commonjs2: 'lodash',
+            amd: 'lodash',
+            root: '_'
+        },
         '@dipscope/type-manager': {
-            root: 'TypeManager',
-            amd: '@dipscope/type-manager',
+            commonjs: '@dipscope/type-manager',
             commonjs2: '@dipscope/type-manager',
-            commonjs: '@dipscope/type-manager'
+            amd: '@dipscope/type-manager',
+            root: 'TypeManager'
         },
         '@dipscope/entity-store': {
-            root: 'EntityStore',
-            amd: '@dipscope/entity-store',
+            commonjs: '@dipscope/entity-store',
             commonjs2: '@dipscope/entity-store',
-            commonjs: '@dipscope/entity-store'
+            amd: '@dipscope/entity-store',
+            root: 'EntityStore'
         }
     },
     plugins: [
@@ -59,7 +65,7 @@ module.exports = [{
     }
 }, {
     mode: 'production',
-    devtool: false,
+    devtool: 'source-map',
     target: 'web',
     entry: {
         index: './src/index.ts'
@@ -73,17 +79,23 @@ module.exports = [{
         umdNamedDefine: true
     },
     externals: {
+        'lodash': {
+            commonjs: 'lodash',
+            commonjs2: 'lodash',
+            amd: 'lodash',
+            root: '_'
+        },
         '@dipscope/type-manager': {
-            root: 'TypeManager',
-            amd: '@dipscope/type-manager',
+            commonjs: '@dipscope/type-manager',
             commonjs2: '@dipscope/type-manager',
-            commonjs: '@dipscope/type-manager'
+            amd: '@dipscope/type-manager',
+            root: 'TypeManager'
         },
         '@dipscope/entity-store': {
-            root: 'EntityStore',
-            amd: '@dipscope/entity-store',
+            commonjs: '@dipscope/entity-store',
             commonjs2: '@dipscope/entity-store',
-            commonjs: '@dipscope/entity-store'
+            amd: '@dipscope/entity-store',
+            root: 'EntityStore'
         }
     },
     plugins: [

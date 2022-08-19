@@ -1,4 +1,4 @@
-import isUndefined from 'lodash/isUndefined';
+import { isUndefined } from 'lodash';
 import { Entity } from '@dipscope/entity-store';
 import { TypeMetadata } from '@dipscope/type-manager';
 import { jsonApiResourceId } from './json-api-resource-id';

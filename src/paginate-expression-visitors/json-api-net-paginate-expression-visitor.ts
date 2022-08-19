@@ -1,4 +1,4 @@
-import isNil from 'lodash/isNil';
+import { isNil } from 'lodash';
 import { CursorPaginateExpression, OffsetPaginateExpression, PaginateExpressionNotSupportedError, SizePaginateExpression } from '@dipscope/entity-store';
 import { JsonApiPaginateExpressionVisitor } from '../json-api-paginate-expression-visitor';
 

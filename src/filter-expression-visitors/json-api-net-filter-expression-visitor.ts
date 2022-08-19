@@ -1,4 +1,4 @@
-import isNil from 'lodash/isNil';
+import { isNil } from 'lodash';
 import { AndFilterExpression, ContainsFilterExpression, EndsWithFilterExpression } from '@dipscope/entity-store';
 import { EqFilterExpression, GteFilterExpression, GtFilterExpression } from '@dipscope/entity-store';
 import { InFilterExpression, LteFilterExpression, LtFilterExpression } from '@dipscope/entity-store';

@@ -1,5 +1,4 @@
-import isNil from 'lodash/isNil';
-import isNumber from 'lodash/isNumber';
+import { isNil, isNumber } from 'lodash';
 import { JsonApiMetadataExtractor } from '../json-api-metadata-extractor';
 import { DocumentObject } from '../types/document-object';
 

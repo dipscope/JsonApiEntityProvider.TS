@@ -1,4 +1,4 @@
-import isNil from 'lodash/isNil';
+import { isNil } from 'lodash';
 import { Entity, EntityCollectionLike, PaginatedEntityCollection } from '@dipscope/entity-store';
 import { TypeMetadata } from '@dipscope/type-manager';
 import { JsonApiAdapter } from './json-api-adapter';

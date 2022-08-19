@@ -1,8 +1,4 @@
-import first from 'lodash/first';
-import isNil from 'lodash/isNil';
-import isString from 'lodash/isString';
-import merge from 'lodash/merge';
-import toString from 'lodash/toString';
+import { first, isNil, isString, merge, toString } from 'lodash';
 import { AddCommand, BatchRemoveCommand, BatchUpdateCommand, BrowseCommand, CommandNotSupportedError, PaginatedEntityCollection } from '@dipscope/entity-store';
 import { BulkAddCommand, BulkQueryCommand, BulkRemoveCommand, BulkSaveCommand } from '@dipscope/entity-store';
 import { BulkUpdateCommand, QueryCommand, RemoveCommand, SaveCommand, UpdateCommand } from '@dipscope/entity-store';

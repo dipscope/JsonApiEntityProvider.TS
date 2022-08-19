@@ -1,11 +1,14 @@
 {
   "author": "DipScope authors and contributors",
-  "dependencies": {
-    "@dipscope/entity-store": "^1.0.0",
-    "cross-fetch": "^3.1.5",
-    "lodash": "^4.17.21"
-  },
   "description": "Json api entity provider for entity store.",
+  "dependencies": {
+    "cross-fetch": "^3.1.5"
+  },
+  "peerDependencies": {
+    "lodash": "^4.17.0",
+    "@dipscope/type-manager": "^5.0.0",
+    "@dipscope/entity-store": "^1.0.0"
+  },
   "devDependencies": {
     "@types/jasmine": "^3.6.3",
     "@types/lodash": "^4.14.182",
