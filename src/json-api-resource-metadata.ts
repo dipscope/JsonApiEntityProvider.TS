@@ -50,6 +50,16 @@ export class JsonApiResourceMetadata<TEntity extends Entity>
     }
 
     /**
+     * Gets resource route.
+     * 
+     * @returns {string} Resource route.
+     */
+    public get route(): string
+    {
+        return this.jsonApiResourceOptions.route ?? this.type;
+    }
+
+    /**
      * Gets property name representing id.
      * 
      * @returns {string} Property name representing id.
@@ -71,6 +81,11 @@ export class JsonApiResourceMetadata<TEntity extends Entity>
         if (!isUndefined(jsonApiResourceOptions.type))
         {
             this.jsonApiResourceOptions.type = jsonApiResourceOptions.type;
+        }
+
+        if (!isUndefined(jsonApiResourceOptions.route))
+        {
+            this.jsonApiResourceOptions.route = jsonApiResourceOptions.route;
         }
 
         if (!isUndefined(jsonApiResourceOptions.id))

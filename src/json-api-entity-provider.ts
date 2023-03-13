@@ -379,7 +379,7 @@ export class JsonApiEntityProvider implements EntityProvider
     protected createResourceLinkObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>): LinkObject
     {
         const jsonApiResourceMetadata = this.jsonApiAdapter.extractJsonApiResourceMetadataOrFail(typeMetadata);
-        const linkObject = `${this.jsonApiConnection.baseUrl}/${jsonApiResourceMetadata.type}`;
+        const linkObject = `${this.jsonApiConnection.baseUrl}/${jsonApiResourceMetadata.route}`;
 
         return linkObject;
     }
