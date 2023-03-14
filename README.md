@@ -65,7 +65,8 @@ import { Company, Message } from './app/entities';
 
 @Type()
 @JsonApiResource({
-    type: 'users' // Specify resource type.
+    type: 'user' // Specify resource type.
+    route: 'users' // Custom route for the resource. If not specified, the value of `type` will be used.
 })
 export class User
 {
