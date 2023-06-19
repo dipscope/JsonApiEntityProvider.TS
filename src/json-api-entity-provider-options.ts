@@ -2,6 +2,7 @@ import { JsonApiFilterExpressionVisitor } from './json-api-filter-expression-vis
 import { JsonApiMetadataExtractor } from './json-api-metadata-extractor';
 import { JsonApiPaginateExpressionVisitor } from './json-api-paginate-expression-visitor';
 import { JsonApiRequestInterceptor } from './json-api-request-interceptor';
+import { JsonApiResponseInterceptor } from './json-api-response-interceptor';
 
 /**
  * Options to configure json api entity provider.
@@ -23,6 +24,13 @@ export interface JsonApiEntityProviderOptions
      * @type {JsonApiRequestInterceptor}
      */
     jsonApiRequestInterceptor?: JsonApiRequestInterceptor;
+
+    /**
+     * Json api response interceptor if any.
+     * 
+     * @type {JsonApiResponseInterceptor}
+     */
+    jsonApiResponseInterceptor?: JsonApiResponseInterceptor;
 
     /**
      * Json api metadata extractor.

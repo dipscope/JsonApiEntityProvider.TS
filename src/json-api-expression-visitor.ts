@@ -53,7 +53,7 @@ export abstract class JsonApiExpressionVisitor
      */
     private createSerializerContext(propertyInfo: PropertyInfo<any>, x: any): SerializerContext<any>
     {
-        return new SerializerContext(x, new WeakMap<ReferenceKey, Array<ReferenceCallback>>(), new WeakMap<ReferenceKey, ReferenceValue>(), 
+        return new SerializerContext(x, new Map<ReferenceKey, Array<ReferenceCallback>>(), new Map<ReferenceKey, ReferenceValue>(), 
         {
             jsonPathKey: '$',
             typeMetadata: propertyInfo.propertyMetadata.typeMetadata

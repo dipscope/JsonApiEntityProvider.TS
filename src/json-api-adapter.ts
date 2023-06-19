@@ -73,7 +73,7 @@ export class JsonApiAdapter
      */
     private createSerializerContext<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, x: any): SerializerContext<TEntity>
     {
-        return new SerializerContext(x, new WeakMap<ReferenceKey, Array<ReferenceCallback>>(), new WeakMap<ReferenceKey, ReferenceValue>(), 
+        return new SerializerContext(x, new Map<ReferenceKey, Array<ReferenceCallback>>(), new Map<ReferenceKey, ReferenceValue>(), 
         {
             jsonPathKey: '$',
             typeMetadata: typeMetadata
@@ -431,7 +431,7 @@ export class JsonApiAdapter
      * 
      * @returns {Entity} Serialized entity created from resource object.
      */
-    private createResourceObjectSerializedEntity(typeMetadata: TypeMetadata<Entity>, resourceObject: ResourceObject, includedResourceObjects: Array<ResourceObject>): Entity
+    private createResourceObjectSerializedEntity<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, resourceObject: ResourceObject, includedResourceObjects: Array<ResourceObject>): Entity
     {
         const jsonApiResourceMetadata = this.extractJsonApiResourceMetadataOrFail(typeMetadata);
         const serializedEntity = {} as Entity;

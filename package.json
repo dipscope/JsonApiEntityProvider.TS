@@ -2,12 +2,13 @@
   "author": "DipScope authors and contributors",
   "description": "Json api entity provider for entity store.",
   "dependencies": {
+    "tslib": "^2.0.1",
     "cross-fetch": "^3.1.5"
   },
   "peerDependencies": {
     "lodash": "^4.17.0",
-    "@dipscope/type-manager": "^5.0.0",
-    "@dipscope/entity-store": "^1.0.0"
+    "@dipscope/type-manager": "^7.0.0-beta.0",
+    "@dipscope/entity-store": "^2.0.0-beta.1"
   },
   "devDependencies": {
     "@types/jasmine": "^3.6.3",
@@ -37,20 +38,25 @@
     "plugin"
   ],
   "license": "Apache-2.0",
-  "main": "index.js",
-  "browser": "index.browser.js",
+  "main": "./dist/umd/index.js",
+  "browser": "./dist/umd/index.browser.js",
+  "module": "./dist/es5/index.js",
+  "es2015": "./dist/es2015/index.js",
+  "types": "./dist/types/index.d.ts",
   "name": "@dipscope/json-api-entity-provider",
   "repository": {
     "type": "git",
     "url": "https://github.com/dipscope/JsonApiEntityProvider.TS.git"
   },
   "scripts": {
-    "build": "npm run clean && npx webpack --config=webpack.config.js && npm run copy",
-    "clean": "shx rm -rf dist",
-    "copy": "shx cp CHANGELOG.md dist && shx cp LICENSE.md dist && shx cp package.json dist && shx cp README.md dist",
+    "build": "npm run build:clean && npm run build:types && npm run build:es5 && npm run build:es2015 && npm run build:umd",
+    "build:clean": "shx rm -rf dist",
+    "build:types": "tsc -p tsconfig/tsconfig.types.json",
+    "build:es5": "tsc -p tsconfig/tsconfig.es5.json",
+    "build:es2015": "tsc -p tsconfig/tsconfig.es2015.json",
+    "build:umd": "npx webpack --config=webpack.config.js",
     "test": "jasmine-ts --config=jasmine.json",
     "lint": "eslint . --ext .ts"
   },
-  "types": "index.d.ts",
   "version": "1.1.0"
 }

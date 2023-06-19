@@ -81,10 +81,12 @@ export class JsonApiEntityProvider implements EntityProvider
     public constructor(jsonApiEntityProviderOptions: JsonApiEntityProviderOptions)
     {
         const defaultJsonApiRequestInterceptor = (request: Request) => request;
+        const defaultJsonApiResponseInterceptor = (response: Response) => response;
         const jsonApiRequestInterceptor = jsonApiEntityProviderOptions.jsonApiRequestInterceptor ?? defaultJsonApiRequestInterceptor;
+        const jsonApiResponseInterceptor = jsonApiEntityProviderOptions.jsonApiResponseInterceptor ?? defaultJsonApiResponseInterceptor;
         const allowToManyRelationshipReplacement = jsonApiEntityProviderOptions.allowToManyRelationshipReplacement ?? false;
 
-        this.jsonApiConnection = new JsonApiConnection(jsonApiEntityProviderOptions.baseUrl, jsonApiRequestInterceptor);
+        this.jsonApiConnection = new JsonApiConnection(jsonApiEntityProviderOptions.baseUrl, jsonApiRequestInterceptor, jsonApiResponseInterceptor);
         this.jsonApiMetadataExtractor = jsonApiEntityProviderOptions.jsonApiMetadataExtractor ?? new JsonApiNetMetadataExtractor();
         this.jsonApiFilterExpressionVisitor = jsonApiEntityProviderOptions.jsonApiFilterExpressionVisitor ?? new JsonApiNetFilterExpressionVisitor();
         this.jsonApiPaginateExpressionVisitor = jsonApiEntityProviderOptions.jsonApiPaginateExpressionVisitor ?? new JsonApiNetPaginateExpressionVisitor();
@@ -276,10 +278,10 @@ export class JsonApiEntityProvider implements EntityProvider
         {
             return null;
         }
-
+        
         const typeMetadata = queryCommand.entityInfo.typeMetadata;
         const resourceIdentifier = toString(keyValue);
-        const linkObject = this.createResourceIdentifierLinkObject(typeMetadata, resourceIdentifier);
+        const linkObject = this.createResourceIdentifierQueryLinkObject(typeMetadata, resourceIdentifier, queryCommand);
         const responseDocumentObject = await this.jsonApiConnection.get(linkObject);
         const responseEntity = this.jsonApiAdapter.createDocumentObjectEntity(typeMetadata, responseDocumentObject);
 
@@ -379,7 +381,32 @@ export class JsonApiEntityProvider implements EntityProvider
 
         return linkObject;
     }
-    
+
+    /**
+     * Creates resource identifier query link object.
+     * 
+     * @param {TypeMetadata<TEntity>} typeMetadata Type metadata.
+     * @param {string} identifier Identifier.
+     * @param {QueryCommand<TEntity>} queryCommand Query command.
+     * 
+     * @returns {LinkObject} Link object.
+     */
+    protected createResourceIdentifierQueryLinkObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, identifier: string, queryCommand: QueryCommand<TEntity>): LinkObject
+    {
+        let linkObject = this.createResourceIdentifierLinkObject(typeMetadata, identifier);
+
+        if (!isNil(queryCommand.includeExpression))
+        {
+            const symbol = '?';
+            const includePrefix = this.jsonApiIncludeExpressionVisitor.prefix;
+            const includeQuery = queryCommand.includeExpression.accept(this.jsonApiIncludeExpressionVisitor);
+
+            linkObject += `${symbol}${includePrefix}${includeQuery}`;
+        }
+
+        return linkObject;
+    }
+
     /**
      * Creates resource identifier link object.
      * 

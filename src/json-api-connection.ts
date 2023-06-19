@@ -1,10 +1,11 @@
 import fetch, { Headers, Request } from 'cross-fetch';
-import { isString } from 'lodash';
+import { isObject, isString } from 'lodash';
 import { ConflictJsonApiError } from './errors/conflict-json-api-error';
 import { ForbiddenJsonApiError } from './errors/forbidden-json-api-error';
 import { NotFoundJsonApiError } from './errors/not-found-json-api-error';
 import { OtherJsonApiError } from './errors/other-json-api-error';
 import { JsonApiRequestInterceptor } from './json-api-request-interceptor';
+import { JsonApiResponseInterceptor } from './json-api-response-interceptor';
 import { DocumentObject } from './types/document-object';
 import { LinkObject } from './types/link-object';
 
@@ -30,22 +31,35 @@ export class JsonApiConnection
     public readonly jsonApiRequestInterceptor: JsonApiRequestInterceptor;
 
     /**
+     * Json api response interceptor for adding additional behaviours.
+     * 
+     * @type {JsonApiResponseInterceptor}
+     */
+    public readonly jsonApiResponseInterceptor: JsonApiResponseInterceptor;
+
+    /**
      * Headers sent with each request.
      * 
      * @type {Headers}
      */
     public readonly headers: Headers;
-
+    
     /**
      * Constructor.
      * 
      * @param {string} baseUrl Base url provided by developer. 
      * @param {JsonApiRequestInterceptor} jsonApiRequestInterceptor Json api request interceptor for adding additional behaviours.
+     * @param {JsonApiResponseInterceptor} jsonApiResponseInterceptor Json api response interceptor for adding additional behaviours.
      */
-    public constructor(baseUrl: string, jsonApiRequestInterceptor: JsonApiRequestInterceptor) 
+    public constructor(
+        baseUrl: string, 
+        jsonApiRequestInterceptor: JsonApiRequestInterceptor, 
+        jsonApiResponseInterceptor: JsonApiResponseInterceptor
+    )
     {
         this.baseUrl = baseUrl.replace(new RegExp('\\/+$', 'g'), '');
         this.jsonApiRequestInterceptor = jsonApiRequestInterceptor;
+        this.jsonApiResponseInterceptor = jsonApiResponseInterceptor;
         this.headers = this.buildHeaders();
 
         return;
@@ -80,15 +94,17 @@ export class JsonApiConnection
         const request = new Request(href, { headers: headers, credentials: 'same-origin', method: 'GET' });
         const interceptedRequest = this.jsonApiRequestInterceptor(request);
         const response = await fetch(interceptedRequest);
+        const interceptedResponse = this.jsonApiResponseInterceptor(response);
+        const responseDocumentObject = await this.extractDocumentObject(interceptedResponse);
 
-        switch (response.status)
+        switch (interceptedResponse.status)
         {
             case 200:
-                return await response.json();
+                return responseDocumentObject;
             case 404:
-                throw new NotFoundJsonApiError(href);
+                throw new NotFoundJsonApiError(href, responseDocumentObject);
             default:
-                throw new OtherJsonApiError(href, response.status);
+                throw new OtherJsonApiError(href, response.status, responseDocumentObject);
         }
     }
 
@@ -108,22 +124,24 @@ export class JsonApiConnection
         const request = new Request(href, { headers: headers, credentials: 'same-origin', method: 'POST', body: body });
         const interceptedRequest = this.jsonApiRequestInterceptor(request);
         const response = await fetch(interceptedRequest);
+        const interceptedResponse = this.jsonApiResponseInterceptor(response);
+        const responseDocumentObject = await this.extractDocumentObject(interceptedResponse);
 
-        switch (response.status)
+        switch (interceptedResponse.status)
         {
             case 201:
-                return await response.json();
+                return responseDocumentObject;
             case 202:
             case 204:
                 return documentObject;
             case 403:
-                throw new ForbiddenJsonApiError(href);
+                throw new ForbiddenJsonApiError(href, responseDocumentObject);
             case 404:
-                throw new NotFoundJsonApiError(href);
+                throw new NotFoundJsonApiError(href, responseDocumentObject);
             case 409:
-                throw new ConflictJsonApiError(href);
+                throw new ConflictJsonApiError(href, responseDocumentObject);
             default:
-                throw new OtherJsonApiError(href, response.status);
+                throw new OtherJsonApiError(href, interceptedResponse.status, responseDocumentObject);
         }
     }
 
@@ -143,22 +161,24 @@ export class JsonApiConnection
         const request = new Request(href, { headers: headers, credentials: 'same-origin', method: 'PATCH', body: body });
         const interceptedRequest = this.jsonApiRequestInterceptor(request);
         const response = await fetch(interceptedRequest);
+        const interceptedResponse = this.jsonApiResponseInterceptor(response);
+        const responseDocumentObject = await this.extractDocumentObject(interceptedResponse);
 
-        switch (response.status)
+        switch (interceptedResponse.status)
         {
             case 200:
-                return await response.json();
+                return responseDocumentObject;
             case 202:
             case 204:
                 return documentObject;
             case 403:
-                throw new ForbiddenJsonApiError(href);
+                throw new ForbiddenJsonApiError(href, responseDocumentObject);
             case 404:
-                throw new NotFoundJsonApiError(href);
+                throw new NotFoundJsonApiError(href, responseDocumentObject);
             case 409:
-                throw new ConflictJsonApiError(href);
+                throw new ConflictJsonApiError(href, responseDocumentObject);
             default:
-                throw new OtherJsonApiError(href, response.status);
+                throw new OtherJsonApiError(href, interceptedResponse.status, responseDocumentObject);
         }
     }
 
@@ -176,20 +196,43 @@ export class JsonApiConnection
         const request = new Request(href, { headers: headers, credentials: 'same-origin', method: 'DELETE' });
         const interceptedRequest = this.jsonApiRequestInterceptor(request);
         const response = await fetch(interceptedRequest);
+        const interceptedResponse = this.jsonApiResponseInterceptor(response);
+        const responseDocumentObject = await this.extractDocumentObject(interceptedResponse);
 
-        switch (response.status)
+        switch (interceptedResponse.status)
         {
             case 200:
             case 202:
             case 204:
                 return;
             case 404:
-                throw new NotFoundJsonApiError(href);
+                throw new NotFoundJsonApiError(href, responseDocumentObject);
             default:
-                throw new OtherJsonApiError(href, response.status);
+                throw new OtherJsonApiError(href, interceptedResponse.status, responseDocumentObject);
         }
     }
-    
+
+    /**
+     * Extracts document object from response.
+     * 
+     * @param {Response} response Response.
+     *  
+     * @returns {DocumentObject} Document object.
+     */
+    private async extractDocumentObject(response: Response): Promise<DocumentObject>
+    {
+        try 
+        {
+            const json = await response.json();
+
+            return isObject(json) ? json : {};
+        }
+        catch
+        {
+            return {};
+        }
+    }
+
     /**
      * Extracts href from link object.
      * 

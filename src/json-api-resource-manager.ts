@@ -54,7 +54,7 @@ export class JsonApiResourceManager
      */
     public static defineJsonApiResourceMetadata<TEntity extends Entity>(typeFn: TypeFn<TEntity>, jsonApiResourceOptions?: JsonApiResourceOptions): JsonApiResourceMetadata<TEntity>
     {
-        const typeMetadata = TypeManager.defineTypeMetadata(typeFn);
+        const typeMetadata = TypeManager.configureTypeMetadata(typeFn);
         const jsonApiResourceMetadata = this.defineJsonApiResourceMetadataForTypeMetadata(typeMetadata, jsonApiResourceOptions);
 
         return jsonApiResourceMetadata;
@@ -70,17 +70,14 @@ export class JsonApiResourceManager
      */
     public static defineJsonApiResourceMetadataForTypeMetadata<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, jsonApiResourceOptions?: JsonApiResourceOptions): JsonApiResourceMetadata<TEntity>
     {
-        const customData = typeMetadata.typeOptions.customData ?? {};
-        const jsonApiResourceMetadata = customData[jsonApiResourceMetadataKey] as JsonApiResourceMetadata<TEntity> ?? new JsonApiResourceMetadata(typeMetadata, {});
+        const jsonApiResourceMetadata = typeMetadata.customContext.get(jsonApiResourceMetadataKey) ?? new JsonApiResourceMetadata(typeMetadata, {});
 
         if (!isNil(jsonApiResourceOptions))
         {
             jsonApiResourceMetadata.configure(jsonApiResourceOptions);
         }
 
-        typeMetadata.configure({
-            customData: { [jsonApiResourceMetadataKey]: jsonApiResourceMetadata }
-        });
+        typeMetadata.customContext.set(jsonApiResourceMetadataKey, jsonApiResourceMetadata)
 
         return jsonApiResourceMetadata;
     }
@@ -109,9 +106,8 @@ export class JsonApiResourceManager
      */
     public static extractJsonApiResourceMetadataFromTypeMetadata<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>): JsonApiResourceMetadata<TEntity> | undefined
     {
-        const customData = typeMetadata.typeOptions.customData ?? {};
-        const jsonApiResourceMetadata = customData[jsonApiResourceMetadataKey] as JsonApiResourceMetadata<TEntity>;
-
+        const jsonApiResourceMetadata = typeMetadata.customContext.get(jsonApiResourceMetadataKey);
+        
         return jsonApiResourceMetadata;
     }
 }

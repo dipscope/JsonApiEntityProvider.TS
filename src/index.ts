@@ -22,4 +22,5 @@ export * from './json-api-resource-metadata';
 export * from './json-api-resource-metadata-not-found-error';
 export * from './json-api-resource-options';
 export * from './json-api-resource';
+export * from './json-api-response-interceptor';
 export * from './json-api-sort-expression-visitor';
