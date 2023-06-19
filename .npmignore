@@ -1,6 +1,7 @@
 .github
 .vs
 .vscode
+backend
 node_modules
 spec
 src
