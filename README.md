@@ -46,6 +46,7 @@ import { AppEntityStore } from './app';
 const jsonApiEntityProvider = new JsonApiEntityProvider({
     baseUrl: 'http://localhost:20001', // Url to you backend endpoint.
     jsonApiRequestInterceptor: (request: Request) => request, // You might intercept requests by adding headers. 
+    jsonApiResponseInterceptor: (response: Response) => response, // You might intercept response by logging errors. 
     jsonApiFilterExpressionVisitor: new JsonApiNetFilterExpressionVisitor(), // You might override filtering strategy used by a server.
     jsonApiPaginateExpressionVisitor: new JsonApiNetPaginateExpressionVisitor(), // You might override pagination strategy used by a server.
     ... // Other options to override.
