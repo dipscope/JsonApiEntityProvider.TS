@@ -1,22 +1,26 @@
-import { isArray, isEmpty, isNil, isNull, isUndefined, toNumber, toString } from 'lodash';
-import { Entity, EntityCollection, Nullable } from '@dipscope/entity-store';
-import { PropertyMetadata, ReferenceCallback, TypeMetadata } from '@dipscope/type-manager';
-import { ReferenceKey, ReferenceValue, SerializerContext } from '@dipscope/type-manager';
+import { isArray, isEmpty, isNil, isNull, isString, isUndefined, toNumber, toString } from 'lodash';
+import { BrowseCommand, Entity, EntityCollection, Nullable, QueryCommand } from '@dipscope/entity-store';
+import { PropertyMetadata, TypeMetadata } from '@dipscope/type-manager';
 import { JsonApiConnection } from './json-api-connection';
+import { JsonApiFilterExpressionVisitor } from './json-api-filter-expression-visitor';
+import { JsonApiIncludeExpressionVisitor } from './json-api-include-expression-visitor';
 import { JsonApiMetadataExtractor } from './json-api-metadata-extractor';
+import { JsonApiPaginateExpressionVisitor } from './json-api-paginate-expression-visitor';
 import { JsonApiPaginatedEntityCollection } from './json-api-paginated-entity-collection';
 import { JsonApiResourceManager } from './json-api-resource-manager';
 import { JsonApiResourceMetadata } from './json-api-resource-metadata';
 import { JsonApiResourceMetadataNotFoundError } from './json-api-resource-metadata-not-found-error';
+import { JsonApiSortExpressionVisitor } from './json-api-sort-expression-visitor';
 import { AttributesObject } from './types/attributes-object';
 import { DocumentObject } from './types/document-object';
+import { LinkObject } from './types/link-object';
 import { RelationshipObject } from './types/relationship-object';
 import { RelationshipsObject } from './types/relationships-object';
 import { ResourceIdentifierObject } from './types/resource-identifier-object';
 import { ResourceObject } from './types/resource-object';
 
 /**
- * Represents json api adapter to build document objects from entities and back.
+ * Represents json api adapter to build document and link objects from entities and back.
  * 
  * @type {JsonApiAdapter}
  */
@@ -28,13 +32,41 @@ export class JsonApiAdapter
      * @type {JsonApiConnection}
      */
     public readonly jsonApiConnection: JsonApiConnection;
-
+    
     /**
-     * Json api metadata extractor.
+     * Metadata extractor to related info.
      * 
      * @type {JsonApiMetadataExtractor}
      */
     public readonly jsonApiMetadataExtractor: JsonApiMetadataExtractor;
+
+    /**
+     * Filter expression visitor used to transform entity store commands.
+     * 
+     * @type {JsonApiFilterExpressionVisitor}
+     */
+    public readonly jsonApiFilterExpressionVisitor: JsonApiFilterExpressionVisitor;
+
+    /**
+     * Paginate expression visitor used to transform entity store commands.
+     * 
+     * @type {JsonApiPaginateExpressionVisitor}
+     */
+    public readonly jsonApiPaginateExpressionVisitor: JsonApiPaginateExpressionVisitor;
+
+    /**
+     * Sort expression visitor used to transform entity store commands.
+     * 
+     * @type {JsonApiSortExpressionVisitor}
+     */
+    public readonly jsonApiSortExpressionVisitor: JsonApiSortExpressionVisitor;
+    
+    /**
+     * Include expression visitor used to transform entity store commands.
+     * 
+     * @type {JsonApiIncludeExpressionVisitor}
+     */
+    public readonly jsonApiIncludeExpressionVisitor: JsonApiIncludeExpressionVisitor;
 
     /**
      * Allow to many relationship replacement?
@@ -42,42 +74,37 @@ export class JsonApiAdapter
      * @type {boolean}
      */
     public readonly allowToManyRelationshipReplacement: boolean;
-
+    
     /**
      * Constructor.
      * 
      * @param {JsonApiConnection} jsonApiConnection Json api connection.
      * @param {JsonApiMetadataExtractor} jsonApiMetadataExtractor Json api metadata extractor.
+     * @param {JsonApiFilterExpressionVisitor} jsonApiFilterExpressionVisitor Json api filter expression visitor.
+     * @param {JsonApiPaginateExpressionVisitor} jsonApiPaginateExpressionVisitor Json api paginate expression visitor.
+     * @param {JsonApiSortExpressionVisitor} jsonApiSortExpressionVisitor Json api sort expression visitor.
+     * @param {JsonApiIncludeExpressionVisitor} jsonApiIncludeExpressionVisitor Json api include expression visitor.
      * @param {boolean} allowToManyRelationshipReplacement Allow to many relationship replacement?
      */
     public constructor(
         jsonApiConnection: JsonApiConnection, 
-        jsonApiMetadataExtractor: JsonApiMetadataExtractor, 
+        jsonApiMetadataExtractor: JsonApiMetadataExtractor,
+        jsonApiFilterExpressionVisitor: JsonApiFilterExpressionVisitor,
+        jsonApiPaginateExpressionVisitor: JsonApiPaginateExpressionVisitor,
+        jsonApiSortExpressionVisitor: JsonApiSortExpressionVisitor,
+        jsonApiIncludeExpressionVisitor: JsonApiIncludeExpressionVisitor,
         allowToManyRelationshipReplacement: boolean
     )
     {
         this.jsonApiConnection = jsonApiConnection;
         this.jsonApiMetadataExtractor = jsonApiMetadataExtractor;
+        this.jsonApiFilterExpressionVisitor = jsonApiFilterExpressionVisitor;
+        this.jsonApiPaginateExpressionVisitor = jsonApiPaginateExpressionVisitor;
+        this.jsonApiSortExpressionVisitor = jsonApiSortExpressionVisitor;
+        this.jsonApiIncludeExpressionVisitor = jsonApiIncludeExpressionVisitor;
         this.allowToManyRelationshipReplacement = allowToManyRelationshipReplacement;
 
         return;
-    }
-
-    /**
-     * Creates serializer context for object.
-     * 
-     * @param {TypeMetadata<TEntity>} typeMetadata Type metadata.
-     * @param {any} x Root object.
-     * 
-     * @returns {SerializerContext<TEntity>} Entity serializer context.
-     */
-    private createSerializerContext<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, x: any): SerializerContext<TEntity>
-    {
-        return new SerializerContext(x, new Map<ReferenceKey, Array<ReferenceCallback>>(), new Map<ReferenceKey, ReferenceValue>(), 
-        {
-            jsonPathKey: '$',
-            typeMetadata: typeMetadata
-        });
     }
 
     /**
@@ -87,7 +114,7 @@ export class JsonApiAdapter
      * 
      * @returns {JsonApiResourceMetadata<TEntity>} Json api resource metadata.
      */
-    public extractJsonApiResourceMetadataOrFail<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>): JsonApiResourceMetadata<TEntity>
+    private extractJsonApiResourceMetadataOrFail<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>): JsonApiResourceMetadata<TEntity>
     {
         const jsonApiResourceMetadata = this.extractJsonApiResourceMetadata(typeMetadata);
 
@@ -106,11 +133,262 @@ export class JsonApiAdapter
      * 
      * @returns {JsonApiResourceMetadata<TEntity>|undefined} Json api resource metadata or undefined if metadata is not present.
      */
-    public extractJsonApiResourceMetadata<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>): JsonApiResourceMetadata<TEntity> | undefined
+    private extractJsonApiResourceMetadata<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>): JsonApiResourceMetadata<TEntity> | undefined
     {
         const jsonApiResourceMetadata = JsonApiResourceManager.extractJsonApiResourceMetadataFromTypeMetadata(typeMetadata);
 
         return jsonApiResourceMetadata;
+    }
+
+    /**
+     * Extracts resource identifier.
+     * 
+     * @param {TypeMetadata<TEntity>} typeMetadata Type metadata.
+     * @param {TEntity} entity Entity to extract identifier for.
+     * 
+     * @returns {string|undefined} Resource identifier.
+     */
+    public extractResourceIdentifier<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, entity: TEntity): string | undefined
+    {
+        const jsonApiResourceMetadata = this.extractJsonApiResourceMetadataOrFail(typeMetadata);
+        const resourceIdentifier = entity[jsonApiResourceMetadata.id];
+
+        if (isNil(resourceIdentifier))
+        {
+            return undefined;
+        }
+
+        return toString(resourceIdentifier);
+    }
+
+    /**
+     * Creates resource link object.
+     * 
+     * @param {TypeMetadata<TEntity>} typeMetadata Type metadata.
+     *  
+     * @returns {LinkObject} Link object.
+     */
+    public createResourceLinkObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>): LinkObject
+    {
+        const jsonApiResourceMetadata = this.extractJsonApiResourceMetadataOrFail(typeMetadata);
+        const linkObject = `${this.jsonApiConnection.baseUrl}/${jsonApiResourceMetadata.route}`;
+
+        return linkObject;
+    }
+
+    /**
+     * Creates resource identifier link object.
+     * 
+     * @param {TypeMetadata<TEntity>} typeMetadata Type metadata.
+     * @param {TEntity|string} entityOrIdentifier Entity or identifier.
+     * 
+     * @returns {LinkObject} Link object.
+     */
+    public createResourceIdentifierLinkObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, entityOrIdentifier: TEntity | string): LinkObject
+    {
+        const resourceLinkObject = this.createResourceLinkObject(typeMetadata);
+        const resourceIdentifier = isString(entityOrIdentifier) ? entityOrIdentifier : toString(this.extractResourceIdentifier(typeMetadata, entityOrIdentifier));
+        const linkObject = `${resourceLinkObject}/${resourceIdentifier}`;
+
+        return linkObject;
+    }
+
+    /**
+     * Creates relationship link object.
+     * 
+     * @param {TypeMetadata<TEntity>} typeMetadata Type metadata.
+     * @param {TEntity|string} entityOrIdentifier Entity or identifier.
+     * @param {PropertyMetadata<TEntity, TRelationship>} propertyMetadata Property metadata.
+     * 
+     * @returns {LinkObject} Link object.
+     */
+    public createRelationshipLinkObject<TEntity extends Entity, TRelationship extends Entity>(typeMetadata: TypeMetadata<TEntity>, entityOrIdentifier: TEntity | string, propertyMetadata: PropertyMetadata<TEntity, TRelationship>): LinkObject
+    {
+        const resourceIdentifierLinkObject = this.createResourceIdentifierLinkObject(typeMetadata, entityOrIdentifier);
+        const relationship = propertyMetadata.serializedPropertyName;
+        const linkObject = `${resourceIdentifierLinkObject}/relationships/${relationship}`;
+        
+        return linkObject;
+    }
+
+    /**
+     * Creates resource identifier query link object.
+     * 
+     * @param {TypeMetadata<TEntity>} typeMetadata Type metadata.
+     * @param {TEntity|string} entityOrIdentifier Entity or identifier.
+     * @param {QueryCommand<TEntity>} queryCommand Query command.
+     * 
+     * @returns {LinkObject} Link object.
+     */
+    public createResourceIdentifierQueryLinkObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, entityOrIdentifier: TEntity | string, queryCommand: QueryCommand<TEntity>): LinkObject
+    {
+        const resourceIdentifierLinkObject = this.createResourceIdentifierLinkObject(typeMetadata, entityOrIdentifier);
+        const linkObject = this.createQueryLinkObject(resourceIdentifierLinkObject, queryCommand);
+
+        return linkObject;
+    }
+
+    /**
+     * Creates relationship query link object.
+     * 
+     * @param {TypeMetadata<TEntity>} typeMetadata Type metadata.
+     * @param {TEntity|string} entityOrIdentifier Entity or identifier.
+     * @param {PropertyMetadata<TEntity, TRelationship>} propertyMetadata Property metadata.
+     * @param {QueryCommand<TEntity>} queryCommand Query command.
+     * 
+     * @returns {LinkObject} Link object.
+     */
+    public createRelationshipQueryLinkObject<TEntity extends Entity, TRelationship extends Entity>(typeMetadata: TypeMetadata<TEntity>, entityOrIdentifier: TEntity | string, propertyMetadata: PropertyMetadata<TEntity, TRelationship>, queryCommand: QueryCommand<TEntity>): LinkObject
+    {
+        const relationshipLinkObject = this.createRelationshipLinkObject(typeMetadata, entityOrIdentifier, propertyMetadata);
+        const linkObject = this.createQueryLinkObject(relationshipLinkObject, queryCommand);
+
+        return linkObject;
+    }
+
+    /**
+     * Creates query link object.
+     * 
+     * @param {LinkObject} baseLinkObject Base link object.
+     * @param {QueryCommand<TEntity>} queryCommand Query command.
+     * 
+     * @returns {LinkObject} Link object.
+     */
+    private createQueryLinkObject<TEntity extends Entity>(baseLinkObject: LinkObject, queryCommand: QueryCommand<TEntity>): LinkObject
+    {
+        let linkObject = baseLinkObject;
+
+        if (!isNil(queryCommand.includeExpression))
+        {
+            const symbol = '?';
+            const includePrefix = this.jsonApiIncludeExpressionVisitor.prefix;
+            const includeQuery = queryCommand.includeExpression.accept(this.jsonApiIncludeExpressionVisitor);
+
+            linkObject += `${symbol}${includePrefix}${includeQuery}`;
+        }
+
+        return linkObject;
+    }
+
+    /**
+     * Creates resource browse link object.
+     * 
+     * @param {TypeMetadata<TEntity>} typeMetadata Type metadata.
+     * @param {BrowseCommand<any, any>} browseCommand Browse command.
+     * 
+     * @returns {LinkObject} Link object.
+     */
+    public createResourceBrowseLinkObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, browseCommand: BrowseCommand<any, any>): LinkObject
+    {
+        const resourceLinkObject = this.createResourceLinkObject(typeMetadata);
+        const linkObject = this.createBrowseLinkObject(resourceLinkObject, browseCommand);
+
+        return linkObject;
+    }
+
+    /**
+     * Creates relationship browse link object.
+     * 
+     * @param {TypeMetadata<TEntity>} typeMetadata Type metadata.
+     * @param {TEntity|string} entityOrIdentifier Entity or identifier.
+     * @param {PropertyMetadata<TEntity, TRelationship>} propertyMetadata Property metadata.
+     * @param {BrowseCommand<TEntity, any>} browseCommand Browse command.
+     * 
+     * @returns {LinkObject} Link object.
+     */
+    public createRelationshipBrowseLinkObject<TEntity extends Entity, TRelationship extends Entity>(typeMetadata: TypeMetadata<TEntity>, entityOrIdentifier: TEntity | string, propertyMetadata: PropertyMetadata<TEntity, TRelationship>, browseCommand: BrowseCommand<TEntity, any>): LinkObject
+    {
+        const relationshipLinkObject = this.createRelationshipLinkObject(typeMetadata, entityOrIdentifier, propertyMetadata);
+        const linkObject = this.createBrowseLinkObject(relationshipLinkObject, browseCommand);
+
+        return linkObject;
+    }
+
+    /**
+     * Creates browse link object.
+     * 
+     * @param {LinkObject} baseLinkObject Base link object.
+     * @param {BrowseCommand<TEntity, any>} browseCommand Browse command.
+     * 
+     * @returns {LinkObject} Link object.
+     */
+    private createBrowseLinkObject<TEntity extends Entity>(baseLinkObject: LinkObject, browseCommand: BrowseCommand<TEntity, any>): LinkObject
+    {
+        let linkObject = baseLinkObject;
+
+        if (!isNil(browseCommand.filterExpression))
+        {
+            const symbol = '?';
+            const filterPrefix = this.jsonApiFilterExpressionVisitor.prefix;
+            const filterQuery = browseCommand.filterExpression.accept(this.jsonApiFilterExpressionVisitor);
+
+            linkObject += `${symbol}${filterPrefix}${filterQuery}`;
+        }
+
+        if (!isNil(browseCommand.sortExpression))
+        {
+            const symbol = isNil(browseCommand.filterExpression) ? '?' : '&';
+            const sortPrefix = this.jsonApiSortExpressionVisitor.prefix;
+            const sortQuery = browseCommand.sortExpression.accept(this.jsonApiSortExpressionVisitor);
+
+            linkObject += `${symbol}${sortPrefix}${sortQuery}`;
+        }
+
+        if (!isNil(browseCommand.includeExpression))
+        {
+            const symbol = isNil(browseCommand.filterExpression) && isNil(browseCommand.sortExpression) ? '?' : '&';
+            const includePrefix = this.jsonApiIncludeExpressionVisitor.prefix;
+            const includeQuery = browseCommand.includeExpression.accept(this.jsonApiIncludeExpressionVisitor);
+
+            linkObject += `${symbol}${includePrefix}${includeQuery}`;
+        }
+
+        if (!isNil(browseCommand.paginateExpression))
+        {
+            const symbol = isNil(browseCommand.filterExpression) && isNil(browseCommand.sortExpression) && isNil(browseCommand.includeExpression) ? '?' : '&';
+            const pagePrefix = this.jsonApiPaginateExpressionVisitor.prefix;
+            const pageQuery = browseCommand.paginateExpression.accept(this.jsonApiPaginateExpressionVisitor);
+
+            linkObject += `${symbol}${pagePrefix}${pageQuery}`;
+        }
+        
+        return linkObject;
+    }
+
+    /**
+     * Creates entity relationship object.
+     * 
+     * @param {TypeMetadata<TEntity>} typeMetadata Type metadata.
+     * @param {Nullable<TEntity>} entity Entity.
+     * 
+     * @returns {RelationshipObject} Relationship object created from entity.
+     */
+    public createEntityRelationshipObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, entity: Nullable<TEntity>): RelationshipObject
+    {
+        const jsonApiResourceMetadata = this.extractJsonApiResourceMetadataOrFail(typeMetadata);
+        const serializerContext = typeMetadata.typeManager.defineSerializerContext(typeMetadata.typeFn, entity);
+        const serializedEntity = serializerContext.serialize(entity);
+        const relationshipObject = this.createValueRelationshipObject(jsonApiResourceMetadata, serializedEntity);
+
+        return relationshipObject;
+    }
+
+    /**
+     * Creates entity collection relationship object.
+     * 
+     * @param {TypeMetadata<TEntity>} typeMetadata Type metadata.
+     * @param {EntityCollection<TEntity>} entityCollection Entity collection.
+     * 
+     * @returns {RelationshipObject} Relationship object created from entity collection.
+     */
+    public createEntityCollectionRelationshipObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, entityCollection: EntityCollection<TEntity>): RelationshipObject
+    {
+        const jsonApiResourceMetadata = this.extractJsonApiResourceMetadataOrFail(typeMetadata);
+        const serializerContext = typeMetadata.typeManager.defineSerializerContext(EntityCollection, entityCollection, [typeMetadata.typeFn]);
+        const serializedEntityCollection = serializerContext.serialize(entityCollection);
+        const relationshipObject = this.createValueRelationshipObject(jsonApiResourceMetadata, serializedEntityCollection);
+
+        return relationshipObject;
     }
 
     /**
@@ -162,7 +440,7 @@ export class JsonApiAdapter
      */
     private createEntityResourceObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, entity: TEntity): ResourceObject
     {
-        const serializerContext = this.createSerializerContext(typeMetadata, entity);
+        const serializerContext = typeMetadata.typeManager.defineSerializerContext(typeMetadata.typeFn, entity);
         const serializedEntity = serializerContext.serialize(entity);
         const resourceObject = this.createSerializedEntityResourceObject(typeMetadata, serializedEntity);
 
@@ -416,9 +694,9 @@ export class JsonApiAdapter
     private createResourceObjectEntity<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, resourceObject: ResourceObject, includedResourceObjects: Array<ResourceObject>): TEntity
     {
         const serializedEntity = this.createResourceObjectSerializedEntity(typeMetadata, resourceObject, includedResourceObjects);
-        const serializerContext = this.createSerializerContext(typeMetadata, serializedEntity);
+        const serializerContext = typeMetadata.typeManager.defineSerializerContext(typeMetadata.typeFn, serializedEntity);
         const entity = serializerContext.deserialize(serializedEntity) as TEntity;
-
+        
         return entity;
     }
 

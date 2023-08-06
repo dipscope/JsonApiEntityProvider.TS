@@ -8,7 +8,7 @@
   "peerDependencies": {
     "lodash": "^4.17.0",
     "@dipscope/type-manager": "^7.0.0",
-    "@dipscope/entity-store": "^2.0.0"
+    "@dipscope/entity-store": "^2.0.2"
   },
   "devDependencies": {
     "@types/jasmine": "^3.6.3",

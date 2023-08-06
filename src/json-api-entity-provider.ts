@@ -1,21 +1,19 @@
-import { first, isNil, isString, merge, toString } from 'lodash';
-import { AddCommand, BatchRemoveCommand, BatchUpdateCommand, BrowseCommand, CommandNotSupportedError, PaginatedEntityCollection } from '@dipscope/entity-store';
+import { first, isNil, merge, toString } from 'lodash';
+import { AddCommand, BatchRemoveCommand, BatchUpdateCommand, CommandNotSupportedError, EntitySet } from '@dipscope/entity-store';
+import { IncludeClause, IncludeCollectionClause, PaginatedEntityCollection } from '@dipscope/entity-store';
 import { BulkAddCommand, BulkQueryCommand, BulkRemoveCommand, BulkSaveCommand } from '@dipscope/entity-store';
 import { BulkUpdateCommand, QueryCommand, RemoveCommand, SaveCommand, UpdateCommand } from '@dipscope/entity-store';
 import { Entity, EntityCollection, EntityProvider, Nullable } from '@dipscope/entity-store';
-import { TypeMetadata } from '@dipscope/type-manager';
 import { JsonApiNetFilterExpressionVisitor } from './filter-expression-visitors/json-api-net-filter-expression-visitor';
 import { JsonApiAdapter } from './json-api-adapter';
 import { JsonApiConnection } from './json-api-connection';
 import { JsonApiEntityProviderOptions } from './json-api-entity-provider-options';
-import { JsonApiFilterExpressionVisitor } from './json-api-filter-expression-visitor';
 import { JsonApiIncludeExpressionVisitor } from './json-api-include-expression-visitor';
-import { JsonApiMetadataExtractor } from './json-api-metadata-extractor';
-import { JsonApiPaginateExpressionVisitor } from './json-api-paginate-expression-visitor';
 import { JsonApiSortExpressionVisitor } from './json-api-sort-expression-visitor';
+import { JsonApiToManyRelationship } from './json-api-to-many-relationship';
+import { JsonApiToOneRelationship } from './json-api-to-one-relationship';
 import { JsonApiNetMetadataExtractor } from './metadata-extractors/json-api-net-metadata-extractor';
 import { JsonApiNetPaginateExpressionVisitor } from './paginate-expression-visitors/json-api-net-paginate-expression-visitor';
-import { LinkObject } from './types/link-object';
 
 /**
  * Json api implementation of entity provider.
@@ -30,41 +28,6 @@ export class JsonApiEntityProvider implements EntityProvider
      * @type {JsonApiConnection}
      */
     public readonly jsonApiConnection: JsonApiConnection;
-
-    /**
-     * Metadata extractor to related info.
-     * 
-     * @type {JsonApiMetadataExtractor}
-     */
-    public readonly jsonApiMetadataExtractor: JsonApiMetadataExtractor;
-
-    /**
-     * Filter expression visitor used to transform entity store commands.
-     * 
-     * @type {JsonApiFilterExpressionVisitor}
-     */
-    public readonly jsonApiFilterExpressionVisitor: JsonApiFilterExpressionVisitor;
-
-    /**
-     * Paginate expression visitor used to transform entity store commands.
-     * 
-     * @type {JsonApiPaginateExpressionVisitor}
-     */
-    public readonly jsonApiPaginateExpressionVisitor: JsonApiPaginateExpressionVisitor;
-
-    /**
-     * Sort expression visitor used to transform entity store commands.
-     * 
-     * @type {JsonApiSortExpressionVisitor}
-     */
-    public readonly jsonApiSortExpressionVisitor: JsonApiSortExpressionVisitor;
-    
-    /**
-     * Include expression visitor used to transform entity store commands.
-     * 
-     * @type {JsonApiIncludeExpressionVisitor}
-     */
-    public readonly jsonApiIncludeExpressionVisitor: JsonApiIncludeExpressionVisitor;
 
     /**
      * Json api adapter to transform entities to propper document objects and back.
@@ -85,14 +48,14 @@ export class JsonApiEntityProvider implements EntityProvider
         const jsonApiRequestInterceptor = jsonApiEntityProviderOptions.jsonApiRequestInterceptor ?? defaultJsonApiRequestInterceptor;
         const jsonApiResponseInterceptor = jsonApiEntityProviderOptions.jsonApiResponseInterceptor ?? defaultJsonApiResponseInterceptor;
         const allowToManyRelationshipReplacement = jsonApiEntityProviderOptions.allowToManyRelationshipReplacement ?? false;
+        const jsonApiMetadataExtractor = jsonApiEntityProviderOptions.jsonApiMetadataExtractor ?? new JsonApiNetMetadataExtractor();
+        const jsonApiFilterExpressionVisitor = jsonApiEntityProviderOptions.jsonApiFilterExpressionVisitor ?? new JsonApiNetFilterExpressionVisitor();
+        const jsonApiPaginateExpressionVisitor = jsonApiEntityProviderOptions.jsonApiPaginateExpressionVisitor ?? new JsonApiNetPaginateExpressionVisitor();
+        const jsonApiSortExpressionVisitor = new JsonApiSortExpressionVisitor();
+        const jsonApiIncludeExpressionVisitor = new JsonApiIncludeExpressionVisitor();
 
         this.jsonApiConnection = new JsonApiConnection(jsonApiEntityProviderOptions.baseUrl, jsonApiRequestInterceptor, jsonApiResponseInterceptor);
-        this.jsonApiMetadataExtractor = jsonApiEntityProviderOptions.jsonApiMetadataExtractor ?? new JsonApiNetMetadataExtractor();
-        this.jsonApiFilterExpressionVisitor = jsonApiEntityProviderOptions.jsonApiFilterExpressionVisitor ?? new JsonApiNetFilterExpressionVisitor();
-        this.jsonApiPaginateExpressionVisitor = jsonApiEntityProviderOptions.jsonApiPaginateExpressionVisitor ?? new JsonApiNetPaginateExpressionVisitor();
-        this.jsonApiSortExpressionVisitor = new JsonApiSortExpressionVisitor();
-        this.jsonApiIncludeExpressionVisitor = new JsonApiIncludeExpressionVisitor();
-        this.jsonApiAdapter = new JsonApiAdapter(this.jsonApiConnection, this.jsonApiMetadataExtractor, allowToManyRelationshipReplacement);
+        this.jsonApiAdapter = new JsonApiAdapter(this.jsonApiConnection, jsonApiMetadataExtractor, jsonApiFilterExpressionVisitor, jsonApiPaginateExpressionVisitor, jsonApiSortExpressionVisitor, jsonApiIncludeExpressionVisitor, allowToManyRelationshipReplacement);
 
         return;
     }
@@ -109,7 +72,7 @@ export class JsonApiEntityProvider implements EntityProvider
         const typeMetadata = addCommand.entityInfo.typeMetadata;
         const requestEntity = addCommand.entity;
         const requestDocumentObject = this.jsonApiAdapter.createEntityDocumentObject(typeMetadata, requestEntity);
-        const linkObject = this.createResourceLinkObject(typeMetadata);
+        const linkObject = this.jsonApiAdapter.createResourceLinkObject(typeMetadata);
         const responseDocumentObject = await this.jsonApiConnection.post(linkObject, requestDocumentObject);
         const responseEntity = this.jsonApiAdapter.createDocumentObjectEntity(typeMetadata, responseDocumentObject);
 
@@ -160,7 +123,7 @@ export class JsonApiEntityProvider implements EntityProvider
         const typeMetadata = updateCommand.entityInfo.typeMetadata;
         const requestEntity = updateCommand.entity;
         const requestDocumentObject = this.jsonApiAdapter.createEntityDocumentObject(typeMetadata, requestEntity);
-        const linkObject = this.createResourceIdentifierLinkObject(typeMetadata, requestEntity);
+        const linkObject = this.jsonApiAdapter.createResourceIdentifierLinkObject(typeMetadata, requestEntity);
         const responseDocumentObject = await this.jsonApiConnection.patch(linkObject, requestDocumentObject);
         const responseEntity = this.jsonApiAdapter.createDocumentObjectEntity(typeMetadata, responseDocumentObject);
 
@@ -206,7 +169,7 @@ export class JsonApiEntityProvider implements EntityProvider
      * 
      * @returns {Promise<void>} Promise to update an entity collection.
      */
-    public executeBatchUpdateCommand<TEntity extends Entity>(batchUpdateCommand: BatchUpdateCommand<TEntity>): Promise<void>
+    public async executeBatchUpdateCommand<TEntity extends Entity>(batchUpdateCommand: BatchUpdateCommand<TEntity>): Promise<void>
     {
         throw new CommandNotSupportedError(batchUpdateCommand, this);
     }
@@ -222,7 +185,7 @@ export class JsonApiEntityProvider implements EntityProvider
     {
         const entityInfo = saveCommand.entityInfo;
         const entity = saveCommand.entity;
-        const resourceIdentifier = this.extractResourceIdentifier(entityInfo.typeMetadata, entity);
+        const resourceIdentifier = this.jsonApiAdapter.extractResourceIdentifier(entityInfo.typeMetadata, entity);
 
         if (isNil(resourceIdentifier))
         {
@@ -281,7 +244,7 @@ export class JsonApiEntityProvider implements EntityProvider
         
         const typeMetadata = queryCommand.entityInfo.typeMetadata;
         const resourceIdentifier = toString(keyValue);
-        const linkObject = this.createResourceIdentifierQueryLinkObject(typeMetadata, resourceIdentifier, queryCommand);
+        const linkObject = this.jsonApiAdapter.createResourceIdentifierQueryLinkObject(typeMetadata, resourceIdentifier, queryCommand);
         const responseDocumentObject = await this.jsonApiConnection.get(linkObject);
         const responseEntity = this.jsonApiAdapter.createDocumentObjectEntity(typeMetadata, responseDocumentObject);
 
@@ -303,7 +266,7 @@ export class JsonApiEntityProvider implements EntityProvider
     public async executeBulkQueryCommand<TEntity extends Entity>(bulkQueryCommand: BulkQueryCommand<TEntity>): Promise<PaginatedEntityCollection<TEntity>>
     {
         const typeMetadata = bulkQueryCommand.entityInfo.typeMetadata;
-        const linkObject = this.createResourceBrowseLinkObject(typeMetadata, bulkQueryCommand);
+        const linkObject = this.jsonApiAdapter.createResourceBrowseLinkObject(typeMetadata, bulkQueryCommand);
         const responseDocumentObject = await this.jsonApiConnection.get(linkObject);
         const responseEntityCollection = this.jsonApiAdapter.createDocumentObjectPaginatedEntityCollection(typeMetadata, responseDocumentObject);
         
@@ -321,9 +284,9 @@ export class JsonApiEntityProvider implements EntityProvider
     {
         const typeMetadata = removeCommand.entityInfo.typeMetadata;
         const requestEntity = removeCommand.entity;
-        const linkObject = this.createResourceIdentifierLinkObject(typeMetadata, requestEntity);
+        const linkObject = this.jsonApiAdapter.createResourceIdentifierLinkObject(typeMetadata, requestEntity);
 
-        await this.jsonApiConnection.delete(linkObject);
+        await this.jsonApiConnection.delete(linkObject, {});
 
         return requestEntity;
     }
@@ -362,138 +325,44 @@ export class JsonApiEntityProvider implements EntityProvider
      * 
      * @returns {Promise<void>} Promise to remove an entity collection.
      */
-    public executeBatchRemoveCommand<TEntity extends Entity>(batchRemoveCommand: BatchRemoveCommand<TEntity>): Promise<void>
+    public async executeBatchRemoveCommand<TEntity extends Entity>(batchRemoveCommand: BatchRemoveCommand<TEntity>): Promise<void>
     {
         throw new CommandNotSupportedError(batchRemoveCommand, this);
     }
 
     /**
-     * Creates resource link object.
+     * Creates json api to many relationship.
      * 
-     * @param {TypeMetadata<TEntity>} typeMetadata Type metadata.
-     *  
-     * @returns {LinkObject} Link object.
-     */
-    protected createResourceLinkObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>): LinkObject
-    {
-        const jsonApiResourceMetadata = this.jsonApiAdapter.extractJsonApiResourceMetadataOrFail(typeMetadata);
-        const linkObject = `${this.jsonApiConnection.baseUrl}/${jsonApiResourceMetadata.route}`;
-
-        return linkObject;
-    }
-
-    /**
-     * Creates resource identifier query link object.
-     * 
-     * @param {TypeMetadata<TEntity>} typeMetadata Type metadata.
-     * @param {string} identifier Identifier.
-     * @param {QueryCommand<TEntity>} queryCommand Query command.
-     * 
-     * @returns {LinkObject} Link object.
-     */
-    protected createResourceIdentifierQueryLinkObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, identifier: string, queryCommand: QueryCommand<TEntity>): LinkObject
-    {
-        let linkObject = this.createResourceIdentifierLinkObject(typeMetadata, identifier);
-
-        if (!isNil(queryCommand.includeExpression))
-        {
-            const symbol = '?';
-            const includePrefix = this.jsonApiIncludeExpressionVisitor.prefix;
-            const includeQuery = queryCommand.includeExpression.accept(this.jsonApiIncludeExpressionVisitor);
-
-            linkObject += `${symbol}${includePrefix}${includeQuery}`;
-        }
-
-        return linkObject;
-    }
-
-    /**
-     * Creates resource identifier link object.
-     * 
-     * @param {TypeMetadata<TEntity>} typeMetadata Type metadata.
+     * @param {EntitySet<TEntity>} entitySet Entity set.
      * @param {TEntity} entity Entity.
+     * @param {IncludeCollectionClause<TEntity, TRelationship>} includeCollectionClause Include collection clause.
      * 
-     * @returns {LinkObject} Link object.
+     * @returns {JsonApiToManyRelationship<TEntity, TRelationship>} Json api to many relationship for provided entity.
      */
-    protected createResourceIdentifierLinkObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, entity: TEntity): LinkObject;
-    protected createResourceIdentifierLinkObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, identifier: string): LinkObject;
-    protected createResourceIdentifierLinkObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, entityOrIdentifier: TEntity | string): LinkObject
+    public createJsonApiToManyRelationship<TEntity extends Entity, TRelationship extends Entity>(entitySet: EntitySet<TEntity>, entity: TEntity, includeCollectionClause: IncludeCollectionClause<TEntity, TRelationship>): JsonApiToManyRelationship<TEntity, TRelationship>
     {
-        const resourceIdentifier = isString(entityOrIdentifier) ? entityOrIdentifier : toString(this.extractResourceIdentifier(typeMetadata, entityOrIdentifier));
-        const linkObject = `${this.createResourceLinkObject(typeMetadata)}/${resourceIdentifier}`;
+        const browseCommand = entitySet.includeCollection(includeCollectionClause).build();
+        const includeExpression = browseCommand.includeExpression!;
+        const propertyInfo = includeExpression.propertyInfo;
 
-        return linkObject;
+        return new JsonApiToManyRelationship<TEntity, TRelationship>(this, entitySet, entity, propertyInfo);
     }
 
     /**
-     * Extracts resource identifier.
+     * Creates json api to one relationship.
      * 
-     * @param {TypeMetadata<TEntity>} typeMetadata Type metadata.
-     * @param {TEntity} entity Entity to extract identifier for.
+     * @param {EntitySet<TEntity>} entitySet Entity set.
+     * @param {TEntity} entity Entity.
+     * @param {IncludeClause<TEntity, TRelationship>} includeClause Include clause.
      * 
-     * @returns {string|undefined} Resource identifier.
+     * @returns {JsonApiToManyRelationship<TEntity, TRelationship>} Json api to many relationship for provided entity.
      */
-    protected extractResourceIdentifier<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, entity: TEntity): string | undefined
+    public createJsonApiToOneRelationship<TEntity extends Entity, TRelationship extends Entity>(entitySet: EntitySet<TEntity>, entity: TEntity, includeClause: IncludeClause<TEntity, TRelationship>): JsonApiToOneRelationship<TEntity, TRelationship>
     {
-        const jsonApiResourceMetadata = this.jsonApiAdapter.extractJsonApiResourceMetadataOrFail(typeMetadata);
-        const resourceIdentifier = entity[jsonApiResourceMetadata.id];
-
-        if (isNil(resourceIdentifier))
-        {
-            return undefined;
-        }
-
-        return toString(resourceIdentifier);
-    }
-
-    /**
-     * Creates resource browse link object.
-     * 
-     * @param {TypeMetadata<TEntity>} typeMetadata Type metadata.
-     * @param {BrowseCommand<any, any>} browseCommand Browse command.
-     * 
-     * @returns {LinkObject} Link object.
-     */
-    protected createResourceBrowseLinkObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, browseCommand: BrowseCommand<any, any>): LinkObject
-    {
-        let linkObject = this.createResourceLinkObject(typeMetadata);
-
-        if (!isNil(browseCommand.filterExpression))
-        {
-            const symbol = '?';
-            const filterPrefix = this.jsonApiFilterExpressionVisitor.prefix;
-            const filterQuery = browseCommand.filterExpression.accept(this.jsonApiFilterExpressionVisitor);
-
-            linkObject += `${symbol}${filterPrefix}${filterQuery}`;
-        }
-
-        if (!isNil(browseCommand.sortExpression))
-        {
-            const symbol = isNil(browseCommand.filterExpression) ? '?' : '&';
-            const sortPrefix = this.jsonApiSortExpressionVisitor.prefix;
-            const sortQuery = browseCommand.sortExpression.accept(this.jsonApiSortExpressionVisitor);
-
-            linkObject += `${symbol}${sortPrefix}${sortQuery}`;
-        }
-
-        if (!isNil(browseCommand.includeExpression))
-        {
-            const symbol = isNil(browseCommand.filterExpression) && isNil(browseCommand.sortExpression) ? '?' : '&';
-            const includePrefix = this.jsonApiIncludeExpressionVisitor.prefix;
-            const includeQuery = browseCommand.includeExpression.accept(this.jsonApiIncludeExpressionVisitor);
-
-            linkObject += `${symbol}${includePrefix}${includeQuery}`;
-        }
-
-        if (!isNil(browseCommand.paginateExpression))
-        {
-            const symbol = isNil(browseCommand.filterExpression) && isNil(browseCommand.sortExpression) && isNil(browseCommand.includeExpression) ? '?' : '&';
-            const pagePrefix = this.jsonApiPaginateExpressionVisitor.prefix;
-            const pageQuery = browseCommand.paginateExpression.accept(this.jsonApiPaginateExpressionVisitor);
-
-            linkObject += `${symbol}${pagePrefix}${pageQuery}`;
-        }
+        const browseCommand = entitySet.include(includeClause).build();
+        const includeExpression = browseCommand.includeExpression!;
+        const propertyInfo = includeExpression.propertyInfo;
         
-        return linkObject;
+        return new JsonApiToOneRelationship<TEntity, TRelationship>(this, entitySet, entity, propertyInfo);
     }
 }

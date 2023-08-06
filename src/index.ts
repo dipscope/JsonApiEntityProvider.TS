@@ -24,3 +24,7 @@ export * from './json-api-resource-options';
 export * from './json-api-resource';
 export * from './json-api-response-interceptor';
 export * from './json-api-sort-expression-visitor';
+export * from './json-api-to-many-relationship-provider';
+export * from './json-api-to-many-relationship';
+export * from './json-api-to-one-relationship-provider';
+export * from './json-api-to-one-relationship';

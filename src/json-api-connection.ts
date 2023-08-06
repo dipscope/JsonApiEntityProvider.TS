@@ -1,5 +1,5 @@
 import fetch, { Headers, Request } from 'cross-fetch';
-import { isObject, isString } from 'lodash';
+import { isEmpty, isObject, isString } from 'lodash';
 import { ConflictJsonApiError } from './errors/conflict-json-api-error';
 import { ForbiddenJsonApiError } from './errors/forbidden-json-api-error';
 import { NotFoundJsonApiError } from './errors/not-found-json-api-error';
@@ -186,14 +186,16 @@ export class JsonApiConnection
      * Sends a delete request using provided link object.
      * 
      * @param {LinkObject} linkObject Link object.
+     * @param {DocumentObject} documentObject Document object.
      * 
      * @returns {DocumentObject} Document object.
      */
-    public async delete(linkObject: LinkObject): Promise<void>
+    public async delete(linkObject: LinkObject, documentObject: DocumentObject): Promise<void>
     {
         const href = this.extractHref(linkObject);
+        const body = isEmpty(documentObject) ? undefined : JSON.stringify(documentObject);
         const headers = new Headers(this.headers);
-        const request = new Request(href, { headers: headers, credentials: 'same-origin', method: 'DELETE' });
+        const request = new Request(href, { headers: headers, credentials: 'same-origin', method: 'DELETE', body: body });
         const interceptedRequest = this.jsonApiRequestInterceptor(request);
         const response = await fetch(interceptedRequest);
         const interceptedResponse = this.jsonApiResponseInterceptor(response);
