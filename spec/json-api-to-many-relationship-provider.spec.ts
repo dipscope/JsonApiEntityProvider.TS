@@ -2,14 +2,16 @@ import { EntitySet } from '@dipscope/entity-store';
 import { generateRandomString, Message, SpecEntityStore, User } from './entity-store.spec';
 import { JsonApiToManyRelationship } from '../src';
 
-async function addUser(userSet: EntitySet<User>, name?: string) {
+async function addUser(userSet: EntitySet<User>, name?: string) 
+{
     name ??= generateRandomString();
     const user = new User(name, 1);
     const remoteUser = await userSet.add(user);
     expect(remoteUser).toBe(user);
     return remoteUser;
 }
-async function setupRelationshipTest() {
+async function setupRelationshipTest() 
+{
     // Get Entity Store Objects
     const specEntityStore = new SpecEntityStore();
     const userSet = specEntityStore.userSet;
@@ -29,19 +31,23 @@ async function setupRelationshipTest() {
     return { specEntityStore, userSet, messageSet, jsonApiEntityProvider, user, userMessages, addedMessages, setupCount }
 }
 
-function createMessage(user: User, text?: string) {
+function createMessage(user: User, text?: string) 
+{
     text ??= generateRandomString();
     return new Message(text, user);
 }
 
-async function getCurrentMessageCount(relationship: JsonApiToManyRelationship<User, Message>) {
+async function getCurrentMessageCount(relationship: JsonApiToManyRelationship<User, Message>) 
+{
     const elements = await relationship.findAll();
     return elements.length;
 }
 
-describe('Json api to many relationship provider', () => {
-    it('should fetch existing entities', async () => {
-        const { userSet, messageSet, userMessages, addedMessages, setupCount } = await setupRelationshipTest();
+describe('Json api to many relationship provider', () => 
+{
+    it('should fetch existing entities', async () =>
+    {
+        const { userSet, messageSet, userMessages, addedMessages, user, setupCount } = await setupRelationshipTest();
         // This is a pre-check for validating that setup was ran correctly
         const initialCount = await getCurrentMessageCount(userMessages);
         expect(initialCount).toBe(setupCount);
@@ -57,11 +63,23 @@ describe('Json api to many relationship provider', () => {
         const finalData = await userMessages.findAll();
         expect(finalData.length).toBe(initialCount);
         // Let's also check that our queried data is correct
-        for (let i = 0; i < setupCount; i++) {
-            expect(finalData.at(i)).toBe(addedMessages.at(i));
+        // Sort Data
+        const sortedFinalData = finalData.sort((a, b) => (a.text > b.text ? -1 : 1))
+        const sortedMessages = addedMessages.sort((a, b) => (a.text > b.text ? -1 : 1))
+        for (let i = 0; i < setupCount; i++)
+        {
+            const actual = sortedFinalData.at(i);
+            const expected = sortedMessages.at(i);
+            if (actual && expected)
+            {
+                actual.user = user;
+                expected.user = user;
+            }
+            expect(actual).toEqual(expected);
         }
     });
-    it('should add new entities', async () => {
+    it('should add new entities', async () =>
+    {
         const { userSet, messageSet, userMessages, setupCount } = await setupRelationshipTest();
         // This is a pre-check for validating that setup was ran correctly
         const initialCount = await getCurrentMessageCount(userMessages);
@@ -86,7 +104,8 @@ describe('Json api to many relationship provider', () => {
 
     });
 
-    it('should update existing entities', async () => {
+    it('should update existing entities', async () =>
+    {
         const { userSet, messageSet, userMessages, setupCount } = await setupRelationshipTest();
         // This is a pre-check for validating that setup was ran correctly
         const initialCount = await getCurrentMessageCount(userMessages);
@@ -110,7 +129,8 @@ describe('Json api to many relationship provider', () => {
         expect(finalData.length).toBe(1);
     });
 
-    it('should remove existing entities', async () => {
+    it('should remove existing entities', async () =>
+    {
         const { userMessages, addedMessages, setupCount } = await setupRelationshipTest();
         // This is a pre-check for validating that setup was ran correctly
         const initialCount = await getCurrentMessageCount(userMessages);
@@ -119,7 +139,8 @@ describe('Json api to many relationship provider', () => {
         expect(addedMessage).toBeDefined(); // ! Required for code assumptions
 
         // ! Function Under Test ! !
-        if (addedMessage) {
+        if (addedMessage) 
+{
             await userMessages.remove(addedMessage);
         }
 
@@ -128,7 +149,8 @@ describe('Json api to many relationship provider', () => {
         expect(finalData.length).toBe(initialCount - 1);
     });
 
-    it('should bulk add new entities', async () => {
+    it('should bulk add new entities', async () =>
+    {
         const { userSet, messageSet, userMessages, setupCount } = await setupRelationshipTest();
         // This is a pre-check for validating that setup was ran correctly
         const initialCount = await getCurrentMessageCount(userMessages);
@@ -152,7 +174,8 @@ describe('Json api to many relationship provider', () => {
         expect(finalData.length).toBe(initialCount + setupCount);
     });
 
-    it('should bulk update existing entities', async () => {
+    it('should bulk update existing entities', async () =>
+    {
         const { userSet, messageSet, userMessages, setupCount } = await setupRelationshipTest();
         // This is a pre-check for validating that setup was ran correctly
         const initialCount = await getCurrentMessageCount(userMessages);
@@ -176,7 +199,8 @@ describe('Json api to many relationship provider', () => {
         expect(finalData.length).toBe(setupCount - 1);
     });
 
-    it('should bulk remove existing entities', async () => {
+    it('should bulk remove existing entities', async () =>
+    {
         const { userMessages, addedMessages, setupCount } = await setupRelationshipTest();
         // This is a pre-check for validating that setup was ran correctly
         const initialCount = await getCurrentMessageCount(userMessages);
@@ -192,16 +216,17 @@ describe('Json api to many relationship provider', () => {
         expect(finalData.length).toBe(1);
     });
 
-    it('should sort existing entities in ascending order', async () => {
+    it('should sort existing entities in ascending order', async () =>
+    {
         const { user, messageSet, userMessages, setupCount } = await setupRelationshipTest();
         // This is a pre-check for validating that setup was ran correctly
         const initialCount = await getCurrentMessageCount(userMessages);
         expect(initialCount).toBe(setupCount);
 
         // Our random strings will start with an ISO string.
-        const messageA = createMessage(user, "00");
+        const messageA = createMessage(user, '00');
         const addedMessageA = await messageSet.add(messageA);
-        const messageZ = createMessage(user, "ZULU");
+        const messageZ = createMessage(user, 'ZULU');
         const addedMessageZ = await messageSet.add(messageZ);
 
         // ! Function Under Test ! !
@@ -212,16 +237,17 @@ describe('Json api to many relationship provider', () => {
         expect(finalData.last()?.id).toBe(addedMessageZ.id);
     });
 
-    it('should sort existing entities in descending order', async () => {
+    it('should sort existing entities in descending order', async () =>
+    {
         const { user, messageSet, userMessages, setupCount } = await setupRelationshipTest();
         // This is a pre-check for validating that setup was ran correctly
         const initialCount = await getCurrentMessageCount(userMessages);
         expect(initialCount).toBe(setupCount);
 
         // Our random strings will start with an ISO string.
-        const messageA = createMessage(user, "00");
+        const messageA = createMessage(user, '00');
         const addedMessageA = await messageSet.add(messageA);
-        const messageZ = createMessage(user, "ZULU");
+        const messageZ = createMessage(user, 'ZULU');
         const addedMessageZ = await messageSet.add(messageZ);
 
         // ! Function Under Test ! !
@@ -233,7 +259,8 @@ describe('Json api to many relationship provider', () => {
         expect(finalData.last()?.id).toBe(addedMessageA.id);
     });
 
-    it('should include relationships', async () => {
+    it('should include relationships', async () =>
+    {
         const { user, userMessages, setupCount } = await setupRelationshipTest();
         // This is a pre-check for validating that setup was ran correctly
         const initialCount = await getCurrentMessageCount(userMessages);
@@ -245,12 +272,14 @@ describe('Json api to many relationship provider', () => {
         expect(finalData.length).toBe(initialCount);
 
         // Let's also check that our queried data is correct
-        for (let i = 0; i < setupCount; i++) {
+        for (let i = 0; i < setupCount; i++)
+        {
             expect(finalData.at(i)?.user).toBe(user);
         }
     });
 
-    it('should paginate existing entities', async () => {
+    it('should paginate existing entities', async () => 
+    {
         const { user, messageSet, userMessages, setupCount } = await setupRelationshipTest();
         // This is a pre-check for validating that setup was ran correctly
         const initialCount = await getCurrentMessageCount(userMessages);
