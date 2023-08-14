@@ -24,10 +24,11 @@ async function setupRelationshipTest()
     const setupCount = 3;
     const messages = [...Array(setupCount).keys()].map(() => createMessage(user));
     const addedMessages = await messageSet.bulkAdd(messages);
-    expect(addedMessages.length).toBe(3);
-    expect(addedMessages.at(0)).toBe(messages[0]);
-    expect(addedMessages.at(1)).toBe(messages[1]);
-    expect(addedMessages.at(2)).toBe(messages[2]);
+    expect(addedMessages.length).toBe(setupCount);
+    for(let i = 0; i < setupCount; i ++)
+    {
+        expect(addedMessages.at(i)).toBe(messages[i])
+    }
     return { specEntityStore, userSet, messageSet, jsonApiEntityProvider, user, userMessages, addedMessages, setupCount }
 }
 
@@ -281,22 +282,26 @@ describe('Json api to many relationship provider', () =>
     it('should paginate existing entities', async () => 
     {
         const { user, messageSet, userMessages, setupCount } = await setupRelationshipTest();
+        const paginationSetSize = 20;
+        const paginationSampleSize = 10;
+        const secondToLastPage = paginationSetSize/paginationSampleSize;
+        const lastPage = secondToLastPage + 1
         // This is a pre-check for validating that setup was ran correctly
         const initialCount = await getCurrentMessageCount(userMessages);
         expect(initialCount).toBe(setupCount);
 
         // Create a lot of messages 
-        const messages = [...Array(20).keys()].map(() => createMessage(user));
+        const messages = [...Array(paginationSetSize).keys()].map(() => createMessage(user));
         await messageSet.bulkAdd(messages);
 
         // ! Function Under Test ! !
         // Let's check that the message was linked correctly
-        const page1Data = await userMessages.paginate(x => x.pageSize(1, 10)).findAll();
-        const page2Data = await userMessages.paginate(x => x.pageSize(2, 10)).findAll();
-        const page3Data = await userMessages.paginate(x => x.pageSize(3, 10)).findAll();
+        const firstPageData = await userMessages.paginate(x => x.pageSize(1, paginationSampleSize)).findAll();
+        const pageNeg1Data = await userMessages.paginate(x => x.pageSize(secondToLastPage, paginationSampleSize)).findAll();
+        const lastPageData = await userMessages.paginate(x => x.pageSize(lastPage, paginationSampleSize)).findAll();
 
-        expect(page1Data.length).toBe(10);
-        expect(page2Data.length).toBe(10);
-        expect(page3Data.length).toBe(setupCount);
+        expect(firstPageData.length).toBe(paginationSampleSize);
+        expect(pageNeg1Data.length).toBe(paginationSampleSize);
+        expect(lastPageData.length).toBe(setupCount);
     });
 });
