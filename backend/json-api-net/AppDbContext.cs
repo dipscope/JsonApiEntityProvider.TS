@@ -38,6 +38,11 @@ namespace JsonApiNet
                 .WithMany(u => u.Messages)
                 .HasForeignKey(m => m.UserId);
 
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Parent)
+                .WithMany(p => p.Messages)
+                .HasForeignKey(m => m.MessageId);
+
             return;
         }
     }
