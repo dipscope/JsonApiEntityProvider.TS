@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using JsonApiDotNetCore.Resources;
 using JsonApiDotNetCore.Resources.Annotations;
 
@@ -21,6 +22,7 @@ namespace JsonApiNet
         public int? CompanyId { get; set; }
 
         [HasMany]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public IList<Message> Messages { get; set; }
     }
 }
