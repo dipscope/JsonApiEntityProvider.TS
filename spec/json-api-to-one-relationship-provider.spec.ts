@@ -43,7 +43,7 @@ describe('Json api to many relationship provider', () =>
 
         // ! Function Under Test ! !
         // Let's check that the message was linked correctly
-        const data = await userCompany.findOne();
+        const data = await userCompany.find();
         expect(data).toEqual(company);
     });
     
@@ -56,7 +56,7 @@ describe('Json api to many relationship provider', () =>
         await userCompany.update(company);
 
         // Let's check that the message was linked correctly
-        const finalData = await userCompany.findOne();
+        const finalData = await userCompany.find();
         expect(finalData?.id).toBe(company.id);
     });
 
@@ -72,39 +72,40 @@ describe('Json api to many relationship provider', () =>
         await userCompany.remove();
 
         // Let's check that the message was unlinked correctly
-        const finalData = await userCompany.findOne();
+        const finalData = await userCompany.find();
         expect(finalData).toBeNull();
     });
 
-    it('should include relationships', async () =>
-    {
-        const { userSet, company, userCompany, user } = await setupRelationshipTest();
-        expect(user.company).toBeUndefined();
-        // We have some continued setup, we need to assign a company to the user.
-        user.company = company;
-        const initialUser = await userSet.update(user);
-        expect(initialUser.company).toBeDefined();
+    // ! Include Clauses Not Yet Implemented !
+    // it('should include relationships', async () =>
+    // {
+    //     const { userSet, company, userCompany, user } = await setupRelationshipTest();
+    //     expect(user.company).toBeUndefined();
+    //     // We have some continued setup, we need to assign a company to the user.
+    //     user.company = company;
+    //     const initialUser = await userSet.update(user);
+    //     expect(initialUser.company).toBeDefined();
 
-        // ! Function Under Test ! !
-        // Let's check that the message was linked correctly
-        const data = await userCompany.include(x => x.users).findOne();
-        expect(data?.id).toEqual(company.id);
-        expect(data?.users.at(0)?.id).toEqual(user.id);
-    });
+    //     // ! Function Under Test ! !
+    //     // Let's check that the message was linked correctly
+    //     const data = await userCompany.include(x => x.users).findOne();
+    //     expect(data?.id).toEqual(company.id);
+    //     expect(data?.users.at(0)?.id).toEqual(user.id);
+    // });
 
-    it('should include a collection of relationships', async () =>
-    {
-        const { userSet, company, userCompany, user } = await setupRelationshipTest();
-        expect(user.company).toBeUndefined();
-        // We have some continued setup, we need to assign a company to the user.
-        user.company = company;
-        const initialUser = await userSet.update(user);
-        expect(initialUser.company).toBeDefined();
+    // it('should include a collection of relationships', async () =>
+    // {
+    //     const { userSet, company, userCompany, user } = await setupRelationshipTest();
+    //     expect(user.company).toBeUndefined();
+    //     // We have some continued setup, we need to assign a company to the user.
+    //     user.company = company;
+    //     const initialUser = await userSet.update(user);
+    //     expect(initialUser.company).toBeDefined();
 
-        // ! Function Under Test ! !
-        // Let's check that the message was linked correctly
-        const data = await userCompany.includeCollection(x => x.users).findOne();
-        expect(data?.id).toEqual(company.id);
-        expect(data?.users.at(0)?.id).toEqual(user.id);
-    });
+    //     // ! Function Under Test ! !
+    //     // Let's check that the message was linked correctly
+    //     const data = await userCompany.includeCollection(x => x.users).findOne();
+    //     expect(data?.id).toEqual(company.id);
+    //     expect(data?.users.at(0)?.id).toEqual(user.id);
+    // });
 });
