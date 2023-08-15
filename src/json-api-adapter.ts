@@ -202,11 +202,11 @@ export class JsonApiAdapter
      * 
      * @returns {LinkObject} Link object.
      */
-    public createRelationshipLinkObject<TEntity extends Entity, TRelationship extends Entity>(typeMetadata: TypeMetadata<TEntity>, entityOrIdentifier: TEntity | string, propertyMetadata: PropertyMetadata<TEntity, TRelationship>, selfLink: boolean = true): LinkObject
+    public createRelationshipLinkObject<TEntity extends Entity, TRelationship extends Entity>(typeMetadata: TypeMetadata<TEntity>, entityOrIdentifier: TEntity | string, propertyMetadata: PropertyMetadata<TEntity, TRelationship>): LinkObject
     {
         const resourceIdentifierLinkObject = this.createResourceIdentifierLinkObject(typeMetadata, entityOrIdentifier);
         const relationship = propertyMetadata.serializedPropertyName;
-        const linkObject = `${resourceIdentifierLinkObject}/${selfLink ? 'relationships/' : ''}${relationship}`;
+        const linkObject = `${resourceIdentifierLinkObject}/relationships/${relationship}`;
         
         return linkObject;
     }
@@ -298,9 +298,10 @@ export class JsonApiAdapter
      */
     public createRelationshipBrowseLinkObject<TEntity extends Entity, TRelationship extends Entity>(typeMetadata: TypeMetadata<TEntity>, entityOrIdentifier: TEntity | string, propertyMetadata: PropertyMetadata<TEntity, TRelationship>, browseCommand: BrowseCommand<TEntity, any>): LinkObject
     {
-        const relationshipLinkObject = this.createRelationshipLinkObject(typeMetadata, entityOrIdentifier, propertyMetadata, false);
+        const resourceIdentifierLinkObject = this.createResourceIdentifierLinkObject(typeMetadata, entityOrIdentifier);
+        const relationship = propertyMetadata.serializedPropertyName;
+        const relationshipLinkObject = `${resourceIdentifierLinkObject}/${relationship}`;
         const linkObject = this.createBrowseLinkObject(relationshipLinkObject, browseCommand);
-
         return linkObject;
     }
 
