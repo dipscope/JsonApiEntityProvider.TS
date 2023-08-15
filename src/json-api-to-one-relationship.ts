@@ -1,4 +1,4 @@
-import { Entity, EntitySet, PropertyInfo } from '@dipscope/entity-store';
+import { Entity, EntitySet, IncludeBrowseCommandBuilder, IncludeClause, Nullable, PropertyInfo } from '@dipscope/entity-store';
 import { JsonApiEntityProvider } from './json-api-entity-provider';
 import { JsonApiToOneRelationshipProvider } from './json-api-to-one-relationship-provider';
 
@@ -68,6 +68,28 @@ export class JsonApiToOneRelationship<TEntity extends Entity, TRelationship exte
         return;
     }
 
+    /**
+     * Finds one entity in a set.
+     *
+     * @returns {Promise<Nullable<TEntity>>} Entity or null.
+     */
+    public findOne(): Promise<Nullable<TRelationship>>
+    {
+        return this.relationshipSet.findOne();
+    }
+    
+    /**
+     * Includes entity for eager loading.
+     *
+     * @param {IncludeClause<TRelationship, TProperty>} includeClause Include clause.
+     *
+     * @returns {IncludeBrowseCommandBuilder<TRelationship, TProperty>} Include browse command builder.
+     */
+    public include<TProperty extends Entity>(includeClause: IncludeClause<TRelationship, TProperty>): IncludeBrowseCommandBuilder<TRelationship, TProperty> 
+    {
+        return this.relationshipSet.include(includeClause);
+    }
+    
     /**
      * Updates a relationship.
      *

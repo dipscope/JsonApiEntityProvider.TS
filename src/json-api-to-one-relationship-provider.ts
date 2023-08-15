@@ -5,6 +5,7 @@ import { BulkUpdateCommand, QueryCommand, RemoveCommand, SaveCommand, UpdateComm
 import { PropertyMetadata, TypeMetadata } from '@dipscope/type-manager';
 import { JsonApiAdapter } from './json-api-adapter';
 import { JsonApiConnection } from './json-api-connection';
+import { JsonApiPaginatedEntityCollection } from './json-api-paginated-entity-collection';
 
 /**
  * Json api to one relationship provider.
@@ -186,7 +187,11 @@ export class JsonApiToOneRelationshipProvider implements EntityProvider
      */
     public async executeBulkQueryCommand<TEntity extends Entity>(bulkQueryCommand: BulkQueryCommand<TEntity>): Promise<PaginatedEntityCollection<TEntity>>
     {
-        throw new CommandNotSupportedError(bulkQueryCommand, this);
+        const typeMetadata = bulkQueryCommand.entityInfo.typeMetadata;
+        const linkObject = this.jsonApiAdapter.createRelationshipBrowseLinkObject(this.typeMetadata, this.entity, this.propertyMetadata, bulkQueryCommand);
+        const responseDocumentObject = await this.jsonApiConnection.get(linkObject);
+        const responseEntity = this.jsonApiAdapter.createDocumentObjectEntity(typeMetadata, responseDocumentObject);
+        return new JsonApiPaginatedEntityCollection(responseEntity ? [responseEntity] : [], typeMetadata, this.jsonApiAdapter);
     }
 
     /**
