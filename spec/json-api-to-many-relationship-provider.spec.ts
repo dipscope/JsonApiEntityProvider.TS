@@ -32,10 +32,10 @@ async function setupRelationshipTest()
     return { specEntityStore, userSet, messageSet, jsonApiEntityProvider, user, userMessages, addedMessages, setupCount }
 }
 
-function createMessage(user: User, text?: string) 
+function createMessage(user: User, parent?: Message, text?: string) 
 {
     text ??= generateRandomString();
-    return new Message(text, user);
+    return new Message(text, user, parent);
 }
 
 async function getCurrentMessageCount(relationship: JsonApiToManyRelationship<User, Message>) 
@@ -225,9 +225,9 @@ describe('Json api to many relationship provider', () =>
         expect(initialCount).toBe(setupCount);
 
         // Our random strings will start with an ISO string.
-        const messageA = createMessage(user, '00');
+        const messageA = createMessage(user, undefined, '00');
         const addedMessageA = await messageSet.add(messageA);
-        const messageZ = createMessage(user, 'ZULU');
+        const messageZ = createMessage(user, undefined, 'ZULU');
         const addedMessageZ = await messageSet.add(messageZ);
 
         // ! Function Under Test ! !
@@ -246,9 +246,9 @@ describe('Json api to many relationship provider', () =>
         expect(initialCount).toBe(setupCount);
 
         // Our random strings will start with an ISO string.
-        const messageA = createMessage(user, '00');
+        const messageA = createMessage(user, undefined, '00');
         const addedMessageA = await messageSet.add(messageA);
-        const messageZ = createMessage(user, 'ZULU');
+        const messageZ = createMessage(user, undefined, 'ZULU');
         const addedMessageZ = await messageSet.add(messageZ);
 
         // ! Function Under Test ! !
@@ -277,6 +277,29 @@ describe('Json api to many relationship provider', () =>
         {
             expect(finalData.at(i)?.user).toBe(user);
         }
+    });
+    
+
+    it('should include a collection of relationships', async () =>
+    {
+        const { user, userMessages, messageSet, setupCount, addedMessages } = await setupRelationshipTest();
+        // This is a pre-check for validating that setup was ran correctly
+        const initialCount = await getCurrentMessageCount(userMessages);
+        expect(initialCount).toBe(setupCount);
+        const message = addedMessages.at(0);
+        expect(message).toBeDefined();
+        if(!message?.id) return;
+
+        const reply = createMessage(user, message);
+        const addedReply = await messageSet.add(reply);
+        expect(addedReply.parent).toBe(message);
+
+        // ! Function Under Test ! !
+        // Let's check that the message was linked correctly
+        const finalData = await userMessages.includeCollection(x => x.messages).findOne();
+        expect(finalData?.id).toBe(message.id);
+        expect(finalData?.messages.length).toBe(1);
+        expect(finalData?.messages.at(0)).toEqual(reply);
     });
 
     it('should paginate existing entities', async () => 
