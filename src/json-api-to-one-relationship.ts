@@ -1,4 +1,4 @@
-import { Entity, EntitySet, IncludeBrowseCommandBuilder, IncludeClause, IncludeCollectionClause, Nullable, PropertyInfo } from '@dipscope/entity-store';
+import { Entity, EntitySet, Nullable, PropertyInfo } from '@dipscope/entity-store';
 import { JsonApiEntityProvider } from './json-api-entity-provider';
 import { JsonApiToOneRelationshipProvider } from './json-api-to-one-relationship-provider';
 
@@ -73,33 +73,9 @@ export class JsonApiToOneRelationship<TEntity extends Entity, TRelationship exte
      *
      * @returns {Promise<Nullable<TEntity>>} Entity or null.
      */
-    public findOne(): Promise<Nullable<TRelationship>>
+    public find(): Promise<Nullable<TRelationship>>
     {
-        return this.relationshipSet.findOne();
-    }
-    
-    /**
-     * Includes entity for eager loading.
-     *
-     * @param {IncludeClause<TRelationship, TProperty>} includeClause Include clause.
-     *
-     * @returns {IncludeBrowseCommandBuilder<TRelationship, TProperty>} Include browse command builder.
-     */
-    public include<TProperty extends Entity>(includeClause: IncludeClause<TRelationship, TProperty>): IncludeBrowseCommandBuilder<TRelationship, TProperty> 
-    {
-        return this.relationshipSet.include(includeClause);
-    }
-
-    /**
-     * Includes entity collection for eager loading.
-     *
-     * @param {IncludeCollectionClause<TRelationship, TProperty>} includeCollectionClause Include collection clause.
-     *
-     * @returns {IncludeBrowseCommandBuilder<TRelationship, TProperty>} Include browse command builder.
-     */
-    public includeCollection<TProperty extends Entity>(includeCollectionClause: IncludeCollectionClause<TRelationship, TProperty>): IncludeBrowseCommandBuilder<TRelationship, TProperty> 
-    {
-        return this.relationshipSet.includeCollection(includeCollectionClause);
+        return this.relationshipSet.find();
     }
     
     /**
