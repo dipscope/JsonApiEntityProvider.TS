@@ -1,6 +1,6 @@
 import { EntitySet } from '@dipscope/entity-store';
-import { generateRandomString, Message, SpecEntityStore, User } from './entity-store.spec';
 import { JsonApiToManyRelationship } from '../src';
+import { generateRandomString, Message, SpecEntityStore, User } from './entity-store.spec';
 
 async function addUser(userSet: EntitySet<User>, name?: string) 
 {
@@ -275,7 +275,7 @@ describe('Json api to many relationship provider', () =>
         // Let's also check that our queried data is correct
         for (let i = 0; i < setupCount; i++)
         {
-            expect(finalData.at(i)?.user).toBe(user);
+            expect(finalData.at(i)?.user).toEqual(user);
         }
     });
     

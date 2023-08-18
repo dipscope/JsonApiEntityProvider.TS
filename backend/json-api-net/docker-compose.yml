@@ -4,9 +4,6 @@ networks:
     backend:
         internal: false
 
-volumes:
-    jsonapinet-db:
-
 services:
     jsonapinet:
         image: ${DOCKER_REGISTRY-}jsonapinet
@@ -36,8 +33,6 @@ services:
             - POSTGRES_USER=postgres
             - POSTGRES_PASSWORD=postgres
             - POSTGRES_DB=postgres
-        volumes:
-            - jsonapinet-db:/var/lib/postgresql/data
         ports:
             - "10020:5432"
         networks:
