@@ -16,7 +16,7 @@ namespace JsonApiNet
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite("Filename=JsonApiNet.db");
+            optionsBuilder.UseNpgsql("Host=jsonapinet.db;Database=postgres;Username=postgres;Password=postgres");
 
             return;
         }

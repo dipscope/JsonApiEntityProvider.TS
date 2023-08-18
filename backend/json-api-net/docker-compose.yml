@@ -1,0 +1,49 @@
+version: '3.4'
+
+networks:
+    backend:
+        internal: false
+
+volumes:
+    jsonapinet-db:
+
+services:
+    jsonapinet:
+        image: ${DOCKER_REGISTRY-}jsonapinet
+        user: root
+        restart: always
+        environment:
+            - ASPNETCORE_ENVIRONMENT=Development
+        ports:
+            - "20001:80"
+            - "20002:443"
+        networks:
+            - backend
+        build:
+            context: .
+            dockerfile: Dockerfile
+        logging:
+            driver: "json-file"
+            options:
+                max-file: "3"
+                max-size: "5m"
+
+    jsonapinet.db:
+        image: postgres:10.10-alpine
+        user: root
+        restart: always
+        environment:
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=postgres
+            - POSTGRES_DB=postgres
+        volumes:
+            - jsonapinet-db:/var/lib/postgresql/data
+        ports:
+            - "10020:5432"
+        networks:
+            - backend
+        logging:
+            driver: "json-file"
+            options:
+                max-file: "3"
+                max-size: "5m"
