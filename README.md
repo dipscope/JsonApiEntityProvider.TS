@@ -81,6 +81,56 @@ export class User
 }
 ```
 
+The same configuration can be rewritten using declarative style.
+
+```typescript
+import { TypeManager, TypeMetadata, TypeConfiguration } from '@dipscope/type-manager';
+import { EntityCollection } from '@dipscope/entity-store';
+import { JsonApiResourceMetadata } from '@dipscope/json-api-entity-provider';
+import { Company, Message } from './app/entities';
+
+export class User
+{
+    public id?: string;
+    public name: string;
+    public email: string;
+    public company: Company;
+    public messages: EntityCollection<Message>;
+
+    // Omitted for brevity ...
+}
+
+export class UserConfiguration implements TypeConfiguration<User>
+{
+    public configure(typeMetadata: TypeMetadata<User>): void 
+    {
+        typeMetadata.configureTypeExtensionMetadata(JsonApiResourceMetadata)
+            .hasType('user')
+            .hasRoute('users');
+
+        typeMetadata.configurePropertyMetadata('id')
+            .hasTypeArgument(String);
+
+        typeMetadata.configurePropertyMetadata('name')
+            .hasTypeArgument(String);
+
+        typeMetadata.configurePropertyMetadata('email')
+            .hasTypeArgument(String);
+
+        typeMetadata.configurePropertyMetadata('company')
+            .hasTypeArgument(Company);
+
+        typeMetadata.configurePropertyMetadata('messages')
+            .hasTypeArgument(EntityCollection)
+            .hasGenericArguments([Message]);
+
+        return;
+    }
+}
+
+TypeManager.applyTypeConfiguration(User, new UserConfiguration());
+```
+
 After that you have to follow `EntityStore.TS` [documentation](https://github.com/dipscope/EntityStore.TS). Supported methods which you can use through `EntitySet` is dependent from backend implementation of [JSON:API](https://jsonapi.org) specification.
 
 ## Versioning

@@ -7,7 +7,6 @@ import { JsonApiIncludeExpressionVisitor } from './json-api-include-expression-v
 import { JsonApiMetadataExtractor } from './json-api-metadata-extractor';
 import { JsonApiPaginateExpressionVisitor } from './json-api-paginate-expression-visitor';
 import { JsonApiPaginatedEntityCollection } from './json-api-paginated-entity-collection';
-import { JsonApiResourceManager } from './json-api-resource-manager';
 import { JsonApiResourceMetadata } from './json-api-resource-metadata';
 import { JsonApiResourceMetadataNotFoundError } from './json-api-resource-metadata-not-found-error';
 import { JsonApiSortExpressionVisitor } from './json-api-sort-expression-visitor';
@@ -135,7 +134,7 @@ export class JsonApiAdapter
      */
     private extractJsonApiResourceMetadata<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>): JsonApiResourceMetadata<TEntity> | undefined
     {
-        const jsonApiResourceMetadata = JsonApiResourceManager.extractJsonApiResourceMetadataFromTypeMetadata(typeMetadata);
+        const jsonApiResourceMetadata = typeMetadata.extractTypeExtensionMetadata(JsonApiResourceMetadata);
 
         return jsonApiResourceMetadata;
     }

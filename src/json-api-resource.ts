@@ -1,4 +1,6 @@
-import { JsonApiResourceManager } from './json-api-resource-manager';
+import { Entity } from '@dipscope/entity-store';
+import { TypeFn, TypeManager } from '@dipscope/type-manager';
+import { JsonApiResourceMetadata } from './json-api-resource-metadata';
 import { JsonApiResourceOptions } from './json-api-resource-options';
 
 /**
@@ -8,11 +10,13 @@ import { JsonApiResourceOptions } from './json-api-resource-options';
  *
  * @returns {ClassDecorator} Class decorator.
  */
-export function JsonApiResource(jsonApiResourceOptions: JsonApiResourceOptions): ClassDecorator
+export function JsonApiResource<TEntity extends Entity>(jsonApiResourceOptions: JsonApiResourceOptions): ClassDecorator
 {
     return function (target: any): any
     {
-        JsonApiResourceManager.defineJsonApiResourceMetadata(target, jsonApiResourceOptions);
+        const typeFn = target as TypeFn<TEntity>;
+        
+        TypeManager.configureTypeMetadata(typeFn).configureTypeExtensionMetadata(JsonApiResourceMetadata, jsonApiResourceOptions);
 
         return target;
     };

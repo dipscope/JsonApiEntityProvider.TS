@@ -1,6 +1,6 @@
 import { EntityCollection, EntitySet, EntityStore } from '@dipscope/entity-store';
-import { Inject, Property, Type } from '@dipscope/type-manager';
-import { JsonApiEntityProvider, JsonApiNetFilterExpressionVisitor, JsonApiNetMetadataExtractor, JsonApiNetPaginateExpressionVisitor, JsonApiResource } from '../src';
+import { Inject, Property, Type, TypeConfiguration, TypeManager, TypeMetadata } from '@dipscope/type-manager';
+import { JsonApiEntityProvider, JsonApiNetFilterExpressionVisitor, JsonApiNetMetadataExtractor, JsonApiNetPaginateExpressionVisitor, JsonApiResource, JsonApiResourceMetadata } from '../src';
 
 @Type()
 export class JsonApiEntity
@@ -68,19 +68,15 @@ export class Message extends JsonApiEntity
     }
 }
 
-@Type()
-@JsonApiResource({
-    type: 'users'
-})
 export class User extends JsonApiEntity
 {
-    @Property(String) public name: string;
-    @Property(Number) public position: number;
-    @Property(UserStatus) public userStatus?: UserStatus;
-    @Property(Company) public company?: Company;
-    @Property(EntityCollection, [Message]) public messages: EntityCollection<Message>;
+    public name: string;
+    public position: number;
+    public userStatus?: UserStatus;
+    public company?: Company;
+    public messages: EntityCollection<Message>;
 
-    public constructor(@Inject('name') name: string, @Inject('position') position: number)
+    public constructor(name: string, position: number)
     {
         super();
 
@@ -91,6 +87,41 @@ export class User extends JsonApiEntity
         return;
     }
 }
+
+export class UserConfiguration implements TypeConfiguration<User>
+{
+    public configure(typeMetadata: TypeMetadata<User>): void 
+    {
+        typeMetadata.configureTypeExtensionMetadata(JsonApiResourceMetadata)
+            .hasType('users');
+
+        typeMetadata.configurePropertyMetadata('name')
+            .hasTypeArgument(String);
+
+        typeMetadata.configurePropertyMetadata('position')
+            .hasTypeArgument(Number);
+    
+        typeMetadata.configurePropertyMetadata('userStatus')
+            .hasTypeArgument(UserStatus);
+
+        typeMetadata.configurePropertyMetadata('company')
+            .hasTypeArgument(Company);
+
+        typeMetadata.configurePropertyMetadata('messages')
+            .hasTypeArgument(EntityCollection)
+            .hasGenericArguments([Message]);
+
+        typeMetadata.configureInjectMetadata(0)
+            .hasKey('name');
+    
+        typeMetadata.configureInjectMetadata(1)
+            .hasKey('position');
+
+        return;
+    }
+}
+
+TypeManager.applyTypeConfiguration(User, new UserConfiguration());
 
 @Type({
     injectable: true

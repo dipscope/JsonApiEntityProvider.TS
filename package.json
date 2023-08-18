@@ -7,7 +7,7 @@
   },
   "peerDependencies": {
     "lodash": "^4.17.0",
-    "@dipscope/type-manager": "^7.0.0",
+    "@dipscope/type-manager": "^7.1.1",
     "@dipscope/entity-store": "^2.0.2"
   },
   "devDependencies": {
