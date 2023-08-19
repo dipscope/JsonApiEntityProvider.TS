@@ -57,11 +57,11 @@ export class Message extends JsonApiEntity
     @Property(String) public text: string;
     @Property(() => User) public user: User;
 
-    // Let's make it so that messages are replyable
-    // let a reply be defined as a message which has a 'parent'
+    // Let's make it so that messages are replyable.
+    // let a reply be defined as a message which has a 'parent'.
     // This will make testing more robust, as messages will posses a toOne and a toMany relationship.
     @Property(() => Message) public parent?: Message;
-    @Property(Array, [() => Message]) public messages!: Message[];
+    @Property(EntityCollection, [() => Message]) public messages: EntityCollection<Message>;
 
     public constructor(@Inject('text') text: string, @Inject('user') user: User, @Inject('parent') parent?: Message)
     {
@@ -70,6 +70,7 @@ export class Message extends JsonApiEntity
         this.text = text;
         this.user = user;
         this.parent = parent;
+        this.messages = new EntityCollection<Message>();
 
         return;
     }

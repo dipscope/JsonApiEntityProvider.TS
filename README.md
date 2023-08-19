@@ -13,6 +13,9 @@ If you like or are using this project please give it a star. Thanks!
 * [What issues it solves?](#what-issues-it-solves)
 * [Installation](#installation)
 * [Configuration](#configuration)
+* [Relationship operations](#relationship-operations)
+    * [To-One relationship provider](#to-one-relationship-provider)
+    * [To-Many relationship provider](#to-many-relationship-provider)
 * [Versioning](#versioning)
 * [Contributing](#contributing)
 * [Authors](#authors)
@@ -133,82 +136,91 @@ TypeManager.applyTypeConfiguration(User, new UserConfiguration());
 
 After that you have to follow `EntityStore.TS` [documentation](https://github.com/dipscope/EntityStore.TS). Supported methods which you can use through `EntitySet` is dependent from backend implementation of [JSON:API](https://jsonapi.org) specification.
 
-## Relationship Operations
-The JsonApiEntityProvider supplies functionality for simplifying relationship operations.
+## Relationship operations
+
+The `JsonApiEntityProvider` supplies functionality for simplifying relationship operations.
 
 NOTE: each of these operations assume that all entities are already stored.
+
 Thus, operations to Update/Add models will have to performed after adding the related model to the entity set.
+
 ```typescript
 const specEntityStore = new SpecEntityStore();
 const userSet = specEntityStore.userSet;
 const messageSet = specEntityStore.messageSet;
 const companySet = specEntityStore.companySet;
 const jsonApiEntityProvider = specEntityStore.jsonApiEntityProvider;
-// Populate entityset
+
+// Populate entity set.
 const user = await userSet.add(user);
-const company = await companySet.add(new Company())
-const company2 = await companySet.add(new Company())
-const newMessage = await messageSet.add(new Message())
-const newMessages = await messageSet.bulkAdd([
-    new Message(),
-    new Message()
-])
-// now perform relationship operations
+const company = await companySet.add(new Company());
+const company2 = await companySet.add(new Company());
+const newMessage = await messageSet.add(new Message());
+const newMessages = await messageSet.bulkAdd([new Message(), new Message()]);
+
+// Now perform relationship operations...
 ```
 
-### To One Relationship Provider
-The To One relationship provider enables operations on to-one relationships.
-ToOne Relationship Provider currently only provides support for the followin features:
-1. Fetching related data
-2. Updating related data (pointing relationship to a different model)
-3. Removing related data
+### To-One relationship provider
+
+The To-One relationship provider enables operations on to-one relationships. To-One relationship provider currently only provides support for the following features:
+
+1. Fetching related data.
+2. Updating related data by pointing relationship to a different model.
+3. Removing related data.
+
 ```typescript
 const userCompany = jsonApiEntityProvider.createJsonApiToOneRelationship(userSet, user, u => u.company);
 
-// Fetching ToOne Relationship data
+// Fetching To-One relationship data.
 const company = await userCompany.find();
 
-// Updating ToOne Relationship data
-await userCompany.update(company2);
+// Updating To-One relationship data.
+await userCompany.update(otherCompany);
 
-// Removing ToOne Relationship data
+// Removing To-One relationship data.
 await userCompany.remove();
 ```
 
-### To Many Relationshp Provider
-The To Many relationship provider enables operations on to-many relationships.
-ToMany Relationship Provider currently only provides support for the followin features:
-1. Fetching related data
-2. Fetching related data with include and sort clauses
-3. Fetching related data with pagination
-3. Adding an element to the related data
-2. Updating related data (pointing relationship to a different model)
-3. Removing an element from the related data
+### To-Many relationship provider
+
+The To-Many relationship provider enables operations on to-many relationships. To-Many relationship provider currently only provides support for the following features:
+
+1. Fetching related data.
+2. Fetching related data with include and sort clauses.
+3. Fetching related data with pagination.
+4. Adding an element to the related data.
+5. Updating related data by pointing relationship to a different model.
+6. Removing an element from the related data.
+
 ```typescript
 const userMessages = jsonApiEntityProvider.createJsonApiToManyRelationship(userSet, user, u => u.messages);
 
-// Fetching ToOne Relationship data
+// Fetching To-Many relationship data.
 const messages = await userMessages.findAll();
-// Fetching related data with include clauses
+
+// Fetching related data with include clauses.
 const messagesWithUser = await userMessages.include(x => x.user).findAll();
 const messagesWithReplies = await userMessages.includeCollection(x => x.messages).findOne();
-// Fetching related data with sort clauses
+
+// Fetching related data with sort clauses.
 const messagesAsc = await userMessages.sortByAsc(x => x.text).findAll();
 const messagesDesc = await userMessages.sortByDesc(x => x.text).findAll();
-// Fetching related data with pagination clauses
+
+// Fetching related data with pagination clauses.
 const firstPageData = await userMessages.paginate(x => x.pageSize(1, 10)).findAll();
 const secondPageData = await userMessages.paginate(x => x.pageSize(2, 10)).findAll();
 const lastPageData = await userMessages.paginate(x => x.pageSize(4, 10)).findAll();
 
-// Adding element(s) to the related data
+// Adding element(s) to the related data.
 await userMessages.add(newMessage);
 await userMessages.bulkAdd(newMessages);
 
-// Updating ToMany Relationship data
+// Updating To-Many relationship data.
 await userMessages.update(addedMessage);
 await userMessages.bulkUpdate(addedMessages);
 
-// Removing ToMany Relationship data
+// Removing To-Many relationship data.
 await userMessages.remove(addedMessage);
 await userMessages.bulkRemove(toRemoveMessages);
 ```
