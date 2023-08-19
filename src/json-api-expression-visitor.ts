@@ -1,6 +1,4 @@
 import { PropertyInfo } from '@dipscope/entity-store';
-import { ReferenceCallback, ReferenceKey } from '@dipscope/type-manager';
-import { ReferenceValue, SerializerContext } from '@dipscope/type-manager';
 
 /**
  * Base class for json api expression visitors.
@@ -27,7 +25,7 @@ export abstract class JsonApiExpressionVisitor
 
         return;
     }
-    
+
     /**
      * Serializes value based on property info.
      * 
@@ -38,25 +36,10 @@ export abstract class JsonApiExpressionVisitor
      */
     protected serializeValue(propertyInfo: PropertyInfo<any>, value: any): any
     {
-        const serializerContext = this.createSerializerContext(propertyInfo, value);
+        const typeMetadata = propertyInfo.propertyMetadata.typeMetadata;
+        const serializerContext = typeMetadata.typeManager.defineSerializerContext(typeMetadata.typeFn, value);
+        const serializedValue = serializerContext.serialize(value);
 
-        return serializerContext.serialize(value);
-    }
-
-    /**
-     * Creates serializer context for a property.
-     * 
-     * @param {PropertyInfo<any>} propertyInfo Property info.
-     * @param {any} x Root object.
-     * 
-     * @returns {SerializerContext<any>} Property serializer context.
-     */
-    private createSerializerContext(propertyInfo: PropertyInfo<any>, x: any): SerializerContext<any>
-    {
-        return new SerializerContext(x, new Map<ReferenceKey, Array<ReferenceCallback>>(), new Map<ReferenceKey, ReferenceValue>(), 
-        {
-            jsonPathKey: '$',
-            typeMetadata: propertyInfo.propertyMetadata.typeMetadata
-        });
+        return serializedValue;
     }
 }

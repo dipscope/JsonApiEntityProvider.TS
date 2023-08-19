@@ -4,16 +4,16 @@ import { IncludeClause, IncludeCollectionClause, PaginatedEntityCollection } fro
 import { BulkAddCommand, BulkQueryCommand, BulkRemoveCommand, BulkSaveCommand } from '@dipscope/entity-store';
 import { BulkUpdateCommand, QueryCommand, RemoveCommand, SaveCommand, UpdateCommand } from '@dipscope/entity-store';
 import { Entity, EntityCollection, EntityProvider, Nullable } from '@dipscope/entity-store';
-import { JsonApiNetFilterExpressionVisitor } from './filter-expression-visitors/json-api-net-filter-expression-visitor';
 import { JsonApiAdapter } from './json-api-adapter';
 import { JsonApiConnection } from './json-api-connection';
 import { JsonApiEntityProviderOptions } from './json-api-entity-provider-options';
+import { JsonApiFilterExpressionVisitor } from './json-api-filter-expression-visitor';
 import { JsonApiIncludeExpressionVisitor } from './json-api-include-expression-visitor';
+import { JsonApiMetadataExtractor } from './json-api-metadata-extractor';
+import { JsonApiPaginateExpressionVisitor } from './json-api-paginate-expression-visitor';
 import { JsonApiSortExpressionVisitor } from './json-api-sort-expression-visitor';
 import { JsonApiToManyRelationship } from './json-api-to-many-relationship';
 import { JsonApiToOneRelationship } from './json-api-to-one-relationship';
-import { JsonApiNetMetadataExtractor } from './metadata-extractors/json-api-net-metadata-extractor';
-import { JsonApiNetPaginateExpressionVisitor } from './paginate-expression-visitors/json-api-net-paginate-expression-visitor';
 
 /**
  * Json api implementation of entity provider.
@@ -48,12 +48,12 @@ export class JsonApiEntityProvider implements EntityProvider
         const jsonApiRequestInterceptor = jsonApiEntityProviderOptions.jsonApiRequestInterceptor ?? defaultJsonApiRequestInterceptor;
         const jsonApiResponseInterceptor = jsonApiEntityProviderOptions.jsonApiResponseInterceptor ?? defaultJsonApiResponseInterceptor;
         const allowToManyRelationshipReplacement = jsonApiEntityProviderOptions.allowToManyRelationshipReplacement ?? false;
-        const jsonApiMetadataExtractor = jsonApiEntityProviderOptions.jsonApiMetadataExtractor ?? new JsonApiNetMetadataExtractor();
-        const jsonApiFilterExpressionVisitor = jsonApiEntityProviderOptions.jsonApiFilterExpressionVisitor ?? new JsonApiNetFilterExpressionVisitor();
-        const jsonApiPaginateExpressionVisitor = jsonApiEntityProviderOptions.jsonApiPaginateExpressionVisitor ?? new JsonApiNetPaginateExpressionVisitor();
+        const jsonApiMetadataExtractor = jsonApiEntityProviderOptions.jsonApiMetadataExtractor ?? new JsonApiMetadataExtractor();
+        const jsonApiFilterExpressionVisitor = jsonApiEntityProviderOptions.jsonApiFilterExpressionVisitor ?? new JsonApiFilterExpressionVisitor();
+        const jsonApiPaginateExpressionVisitor = jsonApiEntityProviderOptions.jsonApiPaginateExpressionVisitor ?? new JsonApiPaginateExpressionVisitor();
         const jsonApiSortExpressionVisitor = new JsonApiSortExpressionVisitor();
         const jsonApiIncludeExpressionVisitor = new JsonApiIncludeExpressionVisitor();
-
+        
         this.jsonApiConnection = new JsonApiConnection(jsonApiEntityProviderOptions.baseUrl, jsonApiRequestInterceptor, jsonApiResponseInterceptor);
         this.jsonApiAdapter = new JsonApiAdapter(this.jsonApiConnection, jsonApiMetadataExtractor, jsonApiFilterExpressionVisitor, jsonApiPaginateExpressionVisitor, jsonApiSortExpressionVisitor, jsonApiIncludeExpressionVisitor, allowToManyRelationshipReplacement);
 

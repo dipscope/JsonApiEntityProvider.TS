@@ -24,7 +24,7 @@ If you like or are using this project please give it a star. Thanks!
 
 ## What issues it solves?
 
-`JsonApi` entity provider aims to cover [JSON:API](https://jsonapi.org) specification. It supports the latest version (v1.0) and allows you easily connect to any backend API which follows described conventions. Besides it provides you extension points for different filtering and pagination strategies which might be used by a server.
+`JsonApi` entity provider aims to cover [JSON:API](https://jsonapi.org) specification. It supports the latest stable version (v1.1) and allows you easily connect to any backend API which follows described conventions. Besides it provides you extension points for different filtering and pagination strategies which might be used by a server.
 
 ## Installation
 
@@ -34,7 +34,7 @@ If you like or are using this project please give it a star. Thanks!
 npm i @dipscope/json-api-entity-provider
 ```
 
-_This package is a plugin for `EntityStore.TS` package. Please [read documentation](https://github.com/dipscope/EntityStore.TS) after installation._
+_This package is a plugin for `EntityStore.TS` package. Please [read documentation](https://github.com/dipscope/EntityStore.TS) after installation. Besides you have to [read documentation](https://github.com/dipscope/TypeManager.TS) for `TypeManager.TS` to know all available options to configure your entity types._
 
 ## Configuration
 
@@ -48,18 +48,24 @@ import { AppEntityStore } from './app';
 // Create entity provider.
 const jsonApiEntityProvider = new JsonApiEntityProvider({
     baseUrl: 'http://localhost:20001', // Url to you backend endpoint.
+
+    // Next options are optional...
+
     jsonApiRequestInterceptor: (request: Request) => request, // You might intercept requests by adding headers. 
     jsonApiResponseInterceptor: (response: Response) => response, // You might intercept response by logging errors. 
     jsonApiFilterExpressionVisitor: new JsonApiNetFilterExpressionVisitor(), // You might override filtering strategy used by a server.
     jsonApiPaginateExpressionVisitor: new JsonApiNetPaginateExpressionVisitor(), // You might override pagination strategy used by a server.
-    ... // Other options to override.
+
+    // Other options to override...
 });
 
 // Create entity store.
 const appEntityStore = new AppEntityStore(jsonApiEntityProvider);
 ```
 
-Second step is to define resource configuration for your entities as required by [JSON:API](https://jsonapi.org) specification.
+As [JSON:API](https://jsonapi.org) specification is agnostic about filtering and pagination strategies, you might need to select one of existing visitors or implement your own by extending base classes.
+
+Second step is to define resource configuration for your entities as required by [JSON:API](https://jsonapi.org) specification. For the full list of available options [check documentation](https://github.com/dipscope/TypeManager.TS) for `TypeManager.TS`.
 
 ```typescript
 import { Type, Property } from '@dipscope/type-manager';

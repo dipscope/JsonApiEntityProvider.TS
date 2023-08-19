@@ -1,4 +1,4 @@
-import { AndFilterExpression, ContainsFilterExpression, FilterExpressionVisitor } from '@dipscope/entity-store';
+import { AndFilterExpression, ContainsFilterExpression, FilterExpressionNotSupportedError, FilterExpressionVisitor } from '@dipscope/entity-store';
 import { EndsWithFilterExpression, EqFilterExpression, GtFilterExpression } from '@dipscope/entity-store';
 import { GteFilterExpression, InFilterExpression, LtFilterExpression } from '@dipscope/entity-store';
 import { LteFilterExpression, NotContainsFilterExpression, NotEndsWithFilterExpression } from '@dipscope/entity-store';
@@ -11,20 +11,20 @@ import { JsonApiExpressionVisitor } from './json-api-expression-visitor';
  * 
  * @type {JsonApiFilterExpressionVisitor}
  */
-export abstract class JsonApiFilterExpressionVisitor extends JsonApiExpressionVisitor implements FilterExpressionVisitor<string>
+export class JsonApiFilterExpressionVisitor extends JsonApiExpressionVisitor implements FilterExpressionVisitor<string>
 {
     /**
      * Constructor.
      * 
      * @param {string} prefix Prefix which prepended right before returned result.
      */
-    public constructor(prefix: string)
+    public constructor(prefix: string = '')
     {
         super(prefix);
 
         return;
     }
-    
+
     /**
      * Visits equal filter expression.
      * 
@@ -32,7 +32,10 @@ export abstract class JsonApiFilterExpressionVisitor extends JsonApiExpressionVi
      * 
      * @returns {string} Expression result.
      */
-    public abstract visitEqFilterExpression(eqFilterExpression: EqFilterExpression): string;
+    public visitEqFilterExpression(eqFilterExpression: EqFilterExpression): string
+    {
+        throw new FilterExpressionNotSupportedError(eqFilterExpression, this);
+    }
 
     /**
      * Visits not equal filter expression.
@@ -41,7 +44,10 @@ export abstract class JsonApiFilterExpressionVisitor extends JsonApiExpressionVi
      * 
      * @returns {string} Expression result.
      */
-    public abstract visitNotEqFilterExpression(notEqFilterExpression: NotEqFilterExpression): string;
+    public visitNotEqFilterExpression(notEqFilterExpression: NotEqFilterExpression): string 
+    {
+        throw new FilterExpressionNotSupportedError(notEqFilterExpression, this);
+    }
 
     /**
      * Visits in filter expression.
@@ -50,7 +56,10 @@ export abstract class JsonApiFilterExpressionVisitor extends JsonApiExpressionVi
      * 
      * @returns {string} Expression result.
      */
-    public abstract visitInFilterExpression(inFilterExpression: InFilterExpression): string;
+    public visitInFilterExpression(inFilterExpression: InFilterExpression): string
+    {
+        throw new FilterExpressionNotSupportedError(inFilterExpression, this);
+    }
 
     /**
      * Visits not in filter expression.
@@ -59,7 +68,10 @@ export abstract class JsonApiFilterExpressionVisitor extends JsonApiExpressionVi
      * 
      * @returns {string} Expression result.
      */
-    public abstract visitNotInFilterExpression(notInFilterExpression: NotInFilterExpression): string;
+    public visitNotInFilterExpression(notInFilterExpression: NotInFilterExpression): string
+    {
+        throw new FilterExpressionNotSupportedError(notInFilterExpression, this);
+    }
 
     /**
      * Visits greater than filter expression.
@@ -68,7 +80,10 @@ export abstract class JsonApiFilterExpressionVisitor extends JsonApiExpressionVi
      * 
      * @returns {string} Expression result.
      */
-    public abstract visitGtFilterExpression(gtFilterExpression: GtFilterExpression): string;
+    public visitGtFilterExpression(gtFilterExpression: GtFilterExpression): string
+    {
+        throw new FilterExpressionNotSupportedError(gtFilterExpression, this);
+    }
 
     /**
      * Visits greater than or equal filter expression.
@@ -77,7 +92,10 @@ export abstract class JsonApiFilterExpressionVisitor extends JsonApiExpressionVi
      * 
      * @returns {string} Expression result.
      */
-    public abstract visitGteFilterExpression(gteFilterExpression: GteFilterExpression): string;
+    public visitGteFilterExpression(gteFilterExpression: GteFilterExpression): string
+    {
+        throw new FilterExpressionNotSupportedError(gteFilterExpression, this);
+    }
 
     /**
      * Visits lower than filter expression.
@@ -86,7 +104,10 @@ export abstract class JsonApiFilterExpressionVisitor extends JsonApiExpressionVi
      * 
      * @returns {string} Expression result.
      */
-    public abstract visitLtFilterExpression(ltFilterExpression: LtFilterExpression): string;
+    public visitLtFilterExpression(ltFilterExpression: LtFilterExpression): string
+    {
+        throw new FilterExpressionNotSupportedError(ltFilterExpression, this);
+    }
 
     /**
      * Visits lower than or equal filter expression.
@@ -95,7 +116,10 @@ export abstract class JsonApiFilterExpressionVisitor extends JsonApiExpressionVi
      * 
      * @returns {string} Expression result.
      */
-    public abstract visitLteFilterExpression(lteFilterExpression: LteFilterExpression): string;
+    public visitLteFilterExpression(lteFilterExpression: LteFilterExpression): string
+    {
+        throw new FilterExpressionNotSupportedError(lteFilterExpression, this);
+    }
 
     /**
      * Visits contains filter expression.
@@ -104,7 +128,10 @@ export abstract class JsonApiFilterExpressionVisitor extends JsonApiExpressionVi
      * 
      * @returns {string} Expression result.
      */
-    public abstract visitContainsFilterExpression(containsFilterExpression: ContainsFilterExpression): string;
+    public visitContainsFilterExpression(containsFilterExpression: ContainsFilterExpression): string
+    {
+        throw new FilterExpressionNotSupportedError(containsFilterExpression, this);
+    }
 
     /**
      * Visits not contains filter expression.
@@ -113,7 +140,10 @@ export abstract class JsonApiFilterExpressionVisitor extends JsonApiExpressionVi
      * 
      * @returns {string} Expression result.
      */
-    public abstract visitNotContainsFilterExpression(notContainsFilterExpression: NotContainsFilterExpression): string;
+    public visitNotContainsFilterExpression(notContainsFilterExpression: NotContainsFilterExpression): string
+    {
+        throw new FilterExpressionNotSupportedError(notContainsFilterExpression, this);
+    }
 
     /**
      * Visits starts with filter expression.
@@ -122,7 +152,10 @@ export abstract class JsonApiFilterExpressionVisitor extends JsonApiExpressionVi
      * 
      * @returns {string} Expression result.
      */
-    public abstract visitStartsWithFilterExpression(startsWithFilterExpression: StartsWithFilterExpression): string;
+    public visitStartsWithFilterExpression(startsWithFilterExpression: StartsWithFilterExpression): string
+    {
+        throw new FilterExpressionNotSupportedError(startsWithFilterExpression, this);
+    }
 
     /**
      * Visits not starts with filter expression.
@@ -131,7 +164,10 @@ export abstract class JsonApiFilterExpressionVisitor extends JsonApiExpressionVi
      * 
      * @returns {string} Expression result.
      */
-    public abstract visitNotStartsWithFilterExpression(notStartsWithFilterExpression: NotStartsWithFilterExpression): string;
+    public visitNotStartsWithFilterExpression(notStartsWithFilterExpression: NotStartsWithFilterExpression): string
+    {
+        throw new FilterExpressionNotSupportedError(notStartsWithFilterExpression, this);
+    }
 
     /**
      * Visits ends with filter expression.
@@ -140,7 +176,10 @@ export abstract class JsonApiFilterExpressionVisitor extends JsonApiExpressionVi
      * 
      * @returns {string} Expression result.
      */
-    public abstract visitEndsWithFilterExpression(endsWithFilterExpression: EndsWithFilterExpression): string;
+    public visitEndsWithFilterExpression(endsWithFilterExpression: EndsWithFilterExpression): string
+    {
+        throw new FilterExpressionNotSupportedError(endsWithFilterExpression, this);
+    }
 
     /**
      * Visits not ends with filter expression.
@@ -149,7 +188,10 @@ export abstract class JsonApiFilterExpressionVisitor extends JsonApiExpressionVi
      * 
      * @returns {string} Expression result.
      */
-    public abstract visitNotEndsWithFilterExpression(notEndsWithFilterExpression: NotEndsWithFilterExpression): string;
+    public visitNotEndsWithFilterExpression(notEndsWithFilterExpression: NotEndsWithFilterExpression): string
+    {
+        throw new FilterExpressionNotSupportedError(notEndsWithFilterExpression, this);
+    }
 
     /**
      * Visits and filter expression.
@@ -158,7 +200,10 @@ export abstract class JsonApiFilterExpressionVisitor extends JsonApiExpressionVi
      * 
      * @returns {string} Expression result.
      */
-    public abstract visitAndFilterExpression(andFilterExpression: AndFilterExpression): string;
+    public visitAndFilterExpression(andFilterExpression: AndFilterExpression): string
+    {
+        throw new FilterExpressionNotSupportedError(andFilterExpression, this);
+    }
 
     /**
      * Visits or filter expression.
@@ -167,5 +212,8 @@ export abstract class JsonApiFilterExpressionVisitor extends JsonApiExpressionVi
      * 
      * @returns {string} Expression result.
      */
-    public abstract visitOrFilterExpression(orFilterExpression: OrFilterExpression): string;
+    public visitOrFilterExpression(orFilterExpression: OrFilterExpression): string
+    {
+        throw new FilterExpressionNotSupportedError(orFilterExpression, this);
+    }
 }
