@@ -113,7 +113,9 @@ export class JsonApiAdapter
      * 
      * @returns {JsonApiResourceMetadata<TEntity>} Json api resource metadata.
      */
-    private extractJsonApiResourceMetadataOrFail<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>): JsonApiResourceMetadata<TEntity>
+    private extractJsonApiResourceMetadataOrFail<TEntity extends Entity>(
+        typeMetadata: TypeMetadata<TEntity>
+    ): JsonApiResourceMetadata<TEntity>
     {
         const jsonApiResourceMetadata = this.extractJsonApiResourceMetadata(typeMetadata);
 
@@ -132,7 +134,9 @@ export class JsonApiAdapter
      * 
      * @returns {JsonApiResourceMetadata<TEntity>|undefined} Json api resource metadata or undefined if metadata is not present.
      */
-    private extractJsonApiResourceMetadata<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>): JsonApiResourceMetadata<TEntity> | undefined
+    private extractJsonApiResourceMetadata<TEntity extends Entity>(
+        typeMetadata: TypeMetadata<TEntity>
+    ): JsonApiResourceMetadata<TEntity> | undefined
     {
         const jsonApiResourceMetadata = typeMetadata.extractTypeExtensionMetadata(JsonApiResourceMetadata);
 
@@ -147,7 +151,10 @@ export class JsonApiAdapter
      * 
      * @returns {string|undefined} Resource identifier.
      */
-    public extractResourceIdentifier<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, entity: TEntity): string | undefined
+    public extractResourceIdentifier<TEntity extends Entity>(
+        typeMetadata: TypeMetadata<TEntity>, 
+        entity: TEntity
+    ): string | undefined
     {
         const jsonApiResourceMetadata = this.extractJsonApiResourceMetadataOrFail(typeMetadata);
         const resourceIdentifier = entity[jsonApiResourceMetadata.id];
@@ -167,7 +174,9 @@ export class JsonApiAdapter
      *  
      * @returns {LinkObject} Link object.
      */
-    public createResourceLinkObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>): LinkObject
+    public createResourceLinkObject<TEntity extends Entity>(
+        typeMetadata: TypeMetadata<TEntity>
+    ): LinkObject
     {
         const jsonApiResourceMetadata = this.extractJsonApiResourceMetadataOrFail(typeMetadata);
         const linkObject = `${this.jsonApiConnection.baseUrl}/${jsonApiResourceMetadata.route}`;
@@ -183,7 +192,10 @@ export class JsonApiAdapter
      * 
      * @returns {LinkObject} Link object.
      */
-    public createResourceIdentifierLinkObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, entityOrIdentifier: TEntity | string): LinkObject
+    public createResourceIdentifierLinkObject<TEntity extends Entity>(
+        typeMetadata: TypeMetadata<TEntity>, 
+        entityOrIdentifier: TEntity | string
+    ): LinkObject
     {
         const resourceLinkObject = this.createResourceLinkObject(typeMetadata);
         const resourceIdentifier = isString(entityOrIdentifier) ? entityOrIdentifier : toString(this.extractResourceIdentifier(typeMetadata, entityOrIdentifier));
@@ -201,7 +213,11 @@ export class JsonApiAdapter
      * 
      * @returns {LinkObject} Link object.
      */
-    public createRelationshipLinkObject<TEntity extends Entity, TRelationship extends Entity>(typeMetadata: TypeMetadata<TEntity>, entityOrIdentifier: TEntity | string, propertyMetadata: PropertyMetadata<TEntity, TRelationship>): LinkObject
+    public createRelationshipLinkObject<TEntity extends Entity, TRelationship extends Entity>(
+        typeMetadata: TypeMetadata<TEntity>, 
+        entityOrIdentifier: TEntity | string, 
+        propertyMetadata: PropertyMetadata<TEntity, TRelationship>
+    ): LinkObject
     {
         const resourceIdentifierLinkObject = this.createResourceIdentifierLinkObject(typeMetadata, entityOrIdentifier);
         const relationship = propertyMetadata.serializedPropertyName;
@@ -219,7 +235,11 @@ export class JsonApiAdapter
      * 
      * @returns {LinkObject} Link object.
      */
-    public createResourceIdentifierQueryLinkObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, entityOrIdentifier: TEntity | string, queryCommand: QueryCommand<TEntity>): LinkObject
+    public createResourceIdentifierQueryLinkObject<TEntity extends Entity>(
+        typeMetadata: TypeMetadata<TEntity>, 
+        entityOrIdentifier: TEntity | string, 
+        queryCommand: QueryCommand<TEntity>
+    ): LinkObject
     {
         const resourceIdentifierLinkObject = this.createResourceIdentifierLinkObject(typeMetadata, entityOrIdentifier);
         const linkObject = this.createQueryLinkObject(resourceIdentifierLinkObject, queryCommand);
@@ -237,7 +257,12 @@ export class JsonApiAdapter
      * 
      * @returns {LinkObject} Link object.
      */
-    public createRelationshipQueryLinkObject<TEntity extends Entity, TRelationship extends Entity>(typeMetadata: TypeMetadata<TEntity>, entityOrIdentifier: TEntity | string, propertyMetadata: PropertyMetadata<TEntity, TRelationship>, queryCommand: QueryCommand<TEntity>): LinkObject
+    public createRelationshipQueryLinkObject<TEntity extends Entity, TRelationship extends Entity>(
+        typeMetadata: TypeMetadata<TEntity>, 
+        entityOrIdentifier: TEntity | string, 
+        propertyMetadata: PropertyMetadata<TEntity, TRelationship>, 
+        queryCommand: QueryCommand<TEntity>
+    ): LinkObject
     {
         const relationshipLinkObject = this.createRelationshipLinkObject(typeMetadata, entityOrIdentifier, propertyMetadata);
         const linkObject = this.createQueryLinkObject(relationshipLinkObject, queryCommand);
@@ -253,7 +278,10 @@ export class JsonApiAdapter
      * 
      * @returns {LinkObject} Link object.
      */
-    private createQueryLinkObject<TEntity extends Entity>(baseLinkObject: LinkObject, queryCommand: QueryCommand<TEntity>): LinkObject
+    private createQueryLinkObject<TEntity extends Entity>(
+        baseLinkObject: LinkObject, 
+        queryCommand: QueryCommand<TEntity>
+    ): LinkObject
     {
         let linkObject = baseLinkObject;
 
@@ -277,7 +305,10 @@ export class JsonApiAdapter
      * 
      * @returns {LinkObject} Link object.
      */
-    public createResourceBrowseLinkObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, browseCommand: BrowseCommand<any, any>): LinkObject
+    public createResourceBrowseLinkObject<TEntity extends Entity>(
+        typeMetadata: TypeMetadata<TEntity>, 
+        browseCommand: BrowseCommand<any, any>
+    ): LinkObject
     {
         const resourceLinkObject = this.createResourceLinkObject(typeMetadata);
         const linkObject = this.createBrowseLinkObject(resourceLinkObject, browseCommand);
@@ -295,7 +326,12 @@ export class JsonApiAdapter
      * 
      * @returns {LinkObject} Link object.
      */
-    public createRelationshipBrowseLinkObject<TEntity extends Entity, TRelationship extends Entity>(typeMetadata: TypeMetadata<TEntity>, entityOrIdentifier: TEntity | string, propertyMetadata: PropertyMetadata<TEntity, TRelationship>, browseCommand: BrowseCommand<TEntity, any>): LinkObject
+    public createRelationshipBrowseLinkObject<TEntity extends Entity, TRelationship extends Entity>(
+        typeMetadata: TypeMetadata<TEntity>, 
+        entityOrIdentifier: TEntity | string, 
+        propertyMetadata: PropertyMetadata<TEntity, TRelationship>, 
+        browseCommand: BrowseCommand<TEntity, any>
+    ): LinkObject
     {
         const resourceIdentifierLinkObject = this.createResourceIdentifierLinkObject(typeMetadata, entityOrIdentifier);
         const relationship = propertyMetadata.serializedPropertyName;
@@ -312,7 +348,10 @@ export class JsonApiAdapter
      * 
      * @returns {LinkObject} Link object.
      */
-    private createBrowseLinkObject<TEntity extends Entity>(baseLinkObject: LinkObject, browseCommand: BrowseCommand<TEntity, any>): LinkObject
+    private createBrowseLinkObject<TEntity extends Entity>(
+        baseLinkObject: LinkObject, 
+        browseCommand: BrowseCommand<TEntity, any>
+    ): LinkObject
     {
         let linkObject = baseLinkObject;
 
@@ -363,7 +402,10 @@ export class JsonApiAdapter
      * 
      * @returns {RelationshipObject} Relationship object created from entity.
      */
-    public createEntityRelationshipObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, entity: Nullable<TEntity>): RelationshipObject
+    public createEntityRelationshipObject<TEntity extends Entity>(
+        typeMetadata: TypeMetadata<TEntity>, 
+        entity: Nullable<TEntity>
+    ): RelationshipObject
     {
         const jsonApiResourceMetadata = this.extractJsonApiResourceMetadataOrFail(typeMetadata);
         const serializerContext = typeMetadata.typeManager.defineSerializerContext(typeMetadata.typeFn, entity);
@@ -381,7 +423,10 @@ export class JsonApiAdapter
      * 
      * @returns {RelationshipObject} Relationship object created from entity collection.
      */
-    public createEntityCollectionRelationshipObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, entityCollection: EntityCollection<TEntity>): RelationshipObject
+    public createEntityCollectionRelationshipObject<TEntity extends Entity>(
+        typeMetadata: TypeMetadata<TEntity>, 
+        entityCollection: EntityCollection<TEntity>
+    ): RelationshipObject
     {
         const jsonApiResourceMetadata = this.extractJsonApiResourceMetadataOrFail(typeMetadata);
         const serializerContext = typeMetadata.typeManager.defineSerializerContext(EntityCollection, entityCollection, [typeMetadata.typeFn]);
@@ -399,7 +444,10 @@ export class JsonApiAdapter
      * 
      * @returns {DocumentObject} Document object created from entity.
      */
-    public createEntityDocumentObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, entity: Nullable<TEntity>): DocumentObject
+    public createEntityDocumentObject<TEntity extends Entity>(
+        typeMetadata: TypeMetadata<TEntity>, 
+        entity: Nullable<TEntity>
+    ): DocumentObject
     {
         const resourceObject = isNil(entity) ? null : this.createEntityResourceObject(typeMetadata, entity);
         const documentObject = { data: resourceObject } as DocumentObject;
@@ -415,7 +463,10 @@ export class JsonApiAdapter
      * 
      * @returns {DocumentObject} Document object created from entity collection.
      */
-    public createEntityCollectionDocumentObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, entityCollection: EntityCollection<TEntity>): DocumentObject
+    public createEntityCollectionDocumentObject<TEntity extends Entity>(
+        typeMetadata: TypeMetadata<TEntity>, 
+        entityCollection: EntityCollection<TEntity>
+    ): DocumentObject
     {
         const resourceObjects = new Array<ResourceObject>();
         const documentObject = { data: resourceObjects } as DocumentObject;
@@ -438,7 +489,10 @@ export class JsonApiAdapter
      * 
      * @returns {ResourceObject} Resource object created from an entity.
      */
-    private createEntityResourceObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, entity: TEntity): ResourceObject
+    private createEntityResourceObject<TEntity extends Entity>(
+        typeMetadata: TypeMetadata<TEntity>, 
+        entity: TEntity
+    ): ResourceObject
     {
         const serializerContext = typeMetadata.typeManager.defineSerializerContext(typeMetadata.typeFn, entity);
         const serializedEntity = serializerContext.serialize(entity);
@@ -455,7 +509,10 @@ export class JsonApiAdapter
      * 
      * @returns {ResourceObject} Resource object created from serialized entity.
      */
-    private createSerializedEntityResourceObject<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, serializedEntity: Entity): ResourceObject
+    private createSerializedEntityResourceObject<TEntity extends Entity>(
+        typeMetadata: TypeMetadata<TEntity>, 
+        serializedEntity: Entity
+    ): ResourceObject
     {
         const jsonApiResourceMetadata = this.extractJsonApiResourceMetadataOrFail(typeMetadata);
         const resourceObject = { type: jsonApiResourceMetadata.type } as ResourceObject;
@@ -524,7 +581,9 @@ export class JsonApiAdapter
      * 
      * @returns {TypeMetadata<any>} Type metadata of relationship.
      */
-    private extractRelationshipTypeMetadata<TEntity extends Entity>(propertyMetadata: PropertyMetadata<TEntity, any>): TypeMetadata<any>
+    private extractRelationshipTypeMetadata<TEntity extends Entity>(
+        propertyMetadata: PropertyMetadata<TEntity, any>
+    ): TypeMetadata<any>
     {
         const propertyTypeMetadata = propertyMetadata.typeMetadata;
         const propertyTypeFn = propertyTypeMetadata.typeFn;
@@ -554,7 +613,10 @@ export class JsonApiAdapter
      * 
      * @returns {RelationshipObject} Relationship object created from value.
      */
-    private createValueRelationshipObject<TEntity extends Entity>(jsonApiResourceMetadata: JsonApiResourceMetadata<TEntity>, value: undefined | Nullable<Entity> | Array<Entity>): RelationshipObject
+    private createValueRelationshipObject<TEntity extends Entity>(
+        jsonApiResourceMetadata: JsonApiResourceMetadata<TEntity>, 
+        value: undefined | Nullable<Entity> | Array<Entity>
+    ): RelationshipObject
     {
         const relationshipObject = { data: undefined } as RelationshipObject;
 
@@ -590,7 +652,10 @@ export class JsonApiAdapter
      * 
      * @returns {Array<ResourceIdentifierObject>} Resource identifier objects.
      */
-    private createSerializedEntityResourceIdentifierObjects<TEntity extends Entity>(jsonApiResourceMetadata: JsonApiResourceMetadata<TEntity>, serializedEntities: Array<Entity>): Array<ResourceIdentifierObject>
+    private createSerializedEntityResourceIdentifierObjects<TEntity extends Entity>(
+        jsonApiResourceMetadata: JsonApiResourceMetadata<TEntity>, 
+        serializedEntities: Array<Entity>
+    ): Array<ResourceIdentifierObject>
     {
         const resourceIdentifierObjects = new Array<ResourceIdentifierObject>();
 
@@ -612,7 +677,10 @@ export class JsonApiAdapter
      * 
      * @returns {ResourceIdentifierObject} Resource identifier object.
      */
-    private createSerializedEntityResourceIdentifierObject<TEntity extends Entity>(jsonApiResourceMetadata: JsonApiResourceMetadata<TEntity>, serializedEntity: Entity): ResourceIdentifierObject
+    private createSerializedEntityResourceIdentifierObject<TEntity extends Entity>(
+        jsonApiResourceMetadata: JsonApiResourceMetadata<TEntity>, 
+        serializedEntity: Entity
+    ): ResourceIdentifierObject
     {
         const resourceIdentifierObject = { type: jsonApiResourceMetadata.type, id: toString(serializedEntity[jsonApiResourceMetadata.id]) } as ResourceIdentifierObject;
 
@@ -627,11 +695,15 @@ export class JsonApiAdapter
      * 
      * @returns {Nullable<TEntity>} Entity created from a document object.
      */
-    public createDocumentObjectEntity<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, documentObject: DocumentObject): Nullable<TEntity>
+    public createDocumentObjectEntity<TEntity extends Entity>(
+        typeMetadata: TypeMetadata<TEntity>, 
+        documentObject: DocumentObject
+    ): Nullable<TEntity>
     {
         const resourceObject = documentObject.data as ResourceObject;
         const includedResourceObjects = documentObject.included ?? new Array<ResourceObject>();
-        const entity = isNil(resourceObject) ? null : this.createResourceObjectEntity(typeMetadata, resourceObject, includedResourceObjects);
+        const serializedEntityMap = new Map<ResourceObject, Entity>();
+        const entity = isNil(resourceObject) ? null : this.createResourceObjectEntity(typeMetadata, resourceObject, includedResourceObjects, serializedEntityMap);
 
         return entity;
     }
@@ -644,7 +716,10 @@ export class JsonApiAdapter
      * 
      * @returns {EntityCollection<TEntity>} Entity collection created from document object.
      */
-    public createDocumentObjectPaginatedEntityCollection<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, documentObject: DocumentObject): JsonApiPaginatedEntityCollection<TEntity>
+    public createDocumentObjectPaginatedEntityCollection<TEntity extends Entity>(
+        typeMetadata: TypeMetadata<TEntity>, 
+        documentObject: DocumentObject
+    ): JsonApiPaginatedEntityCollection<TEntity>
     {
         const entityCollection = this.createDocumentObjectEntityCollection(typeMetadata, documentObject);
         const totalLength = this.jsonApiMetadataExtractor.extractTotalEntityCount(documentObject);
@@ -666,15 +741,19 @@ export class JsonApiAdapter
      * 
      * @returns {EntityCollection<TEntity>} Entity collection created from document object.
      */
-    public createDocumentObjectEntityCollection<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, documentObject: DocumentObject): EntityCollection<TEntity>
+    public createDocumentObjectEntityCollection<TEntity extends Entity>(
+        typeMetadata: TypeMetadata<TEntity>, 
+        documentObject: DocumentObject
+    ): EntityCollection<TEntity>
     {
         const entityCollection = new EntityCollection<TEntity>();
         const resourceObjects = documentObject.data as Array<ResourceObject>;
-        const relationshipResourceObjects = documentObject.included ?? new Array<ResourceObject>();
+        const includedResourceObjects = documentObject.included ?? new Array<ResourceObject>();
+        const serializedEntityMap = new Map<ResourceObject, Entity>();
 
         for (const resourceObject of resourceObjects)
         {
-            const entity = this.createResourceObjectEntity(typeMetadata, resourceObject, relationshipResourceObjects);
+            const entity = this.createResourceObjectEntity(typeMetadata, resourceObject, includedResourceObjects, serializedEntityMap);
 
             entityCollection.push(entity);
         }
@@ -688,12 +767,18 @@ export class JsonApiAdapter
      * @param {TypeMetadata<TEntity>} typeMetadata Entity type metadata.
      * @param {ResourceObject} resourceObject Resource object.
      * @param {Array<ResourceObject>} includedResourceObjects Included resource objects.
+     * @param {Map<ResourceObject, Entity>} serializedEntityMap Serialized entity map.
      * 
      * @returns {TEntity} Entity created from resource object.
      */
-    private createResourceObjectEntity<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, resourceObject: ResourceObject, includedResourceObjects: Array<ResourceObject>): TEntity
+    private createResourceObjectEntity<TEntity extends Entity>(
+        typeMetadata: TypeMetadata<TEntity>, 
+        resourceObject: ResourceObject, 
+        includedResourceObjects: Array<ResourceObject>, 
+        serializedEntityMap: Map<ResourceObject, Entity>
+    ): TEntity
     {
-        const serializedEntity = this.createResourceObjectSerializedEntity(typeMetadata, resourceObject, includedResourceObjects);
+        const serializedEntity = this.createResourceObjectSerializedEntity(typeMetadata, resourceObject, includedResourceObjects, serializedEntityMap);
         const serializerContext = typeMetadata.typeManager.defineSerializerContext(typeMetadata.typeFn, serializedEntity);
         const entity = serializerContext.deserialize(serializedEntity) as TEntity;
         
@@ -706,15 +791,30 @@ export class JsonApiAdapter
      * @param {TypeMetadata<Entity>} typeMetadata Entity type metadata.
      * @param {ResourceObject} resourceObject Resource object.
      * @param {Array<ResourceObject>} includedResourceObjects Included resource objects.
+     * @param {Map<ResourceObject, Entity>} serializedEntityMap Serialized entity map.
      * 
      * @returns {Entity} Serialized entity created from resource object.
      */
-    private createResourceObjectSerializedEntity<TEntity extends Entity>(typeMetadata: TypeMetadata<TEntity>, resourceObject: ResourceObject, includedResourceObjects: Array<ResourceObject>): Entity
+    private createResourceObjectSerializedEntity<TEntity extends Entity>(
+        typeMetadata: TypeMetadata<TEntity>, 
+        resourceObject: ResourceObject, 
+        includedResourceObjects: Array<ResourceObject>, 
+        serializedEntityMap: Map<ResourceObject, Entity>
+    ): Entity
     {
+        const mappedSerializedEntity = serializedEntityMap.get(resourceObject);
+
+        if (!isNil(mappedSerializedEntity)) 
+        {
+            return mappedSerializedEntity;
+        }
+
         const jsonApiResourceMetadata = this.extractJsonApiResourceMetadataOrFail(typeMetadata);
         const serializedEntity = {} as Entity;
         const attributes = resourceObject.attributes ?? {} as AttributesObject;
         const relationships = resourceObject.relationships ?? {} as RelationshipsObject;
+        
+        serializedEntityMap.set(resourceObject, serializedEntity);
 
         for (const propertyMetadata of typeMetadata.propertyMetadataMap.values())
         {
@@ -742,7 +842,12 @@ export class JsonApiAdapter
                 continue;
             }
 
-            serializedEntity[serializedPropertyName] = this.createRelationshipObjectValue(propertyMetadata, relationships[serializedPropertyName], includedResourceObjects);
+            serializedEntity[serializedPropertyName] = this.createRelationshipObjectValue(
+                propertyMetadata, 
+                relationships[serializedPropertyName], 
+                includedResourceObjects, 
+                serializedEntityMap
+            );
         }
 
         return serializedEntity;
@@ -754,10 +859,16 @@ export class JsonApiAdapter
      * @param {PropertyMetadata<TEntity, any>} propertyMetadata Relationship property metadata.
      * @param {RelationshipObject} relationshipObject Relationship object.
      * @param {Array<ResourceObject>} includedResourceObjects Included resource objects.
+     * @param {Map<ResourceObject, Entity>} serializedEntityMap Serialized entity map.
      * 
      * @returns {undefined|Nullable<Entity>|Array<Entity>} Relationship value.
      */
-    private createRelationshipObjectValue<TEntity extends Entity>(propertyMetadata: PropertyMetadata<TEntity, any>, relationshipObject: RelationshipObject, includedResourceObjects: Array<ResourceObject>): undefined | Nullable<Entity> | Array<Entity>
+    private createRelationshipObjectValue<TEntity extends Entity>(
+        propertyMetadata: PropertyMetadata<TEntity, any>, 
+        relationshipObject: RelationshipObject, 
+        includedResourceObjects: Array<ResourceObject>, 
+        serializedEntityMap: Map<ResourceObject, Entity>
+    ): undefined | Nullable<Entity> | Array<Entity>
     {
         if (isUndefined(relationshipObject.data))
         {
@@ -771,12 +882,22 @@ export class JsonApiAdapter
 
         if (isArray(relationshipObject.data))
         {
-            const value = this.createResourceIdentifierObjectSerializedEntities(propertyMetadata, relationshipObject.data, includedResourceObjects);
+            const value = this.createResourceIdentifierObjectSerializedEntities(
+                propertyMetadata, 
+                relationshipObject.data, 
+                includedResourceObjects, 
+                serializedEntityMap
+            );
 
             return value;
         }
 
-        const value = this.createResourceIdentifierObjectSerializedEntity(propertyMetadata, relationshipObject.data, includedResourceObjects);
+        const value = this.createResourceIdentifierObjectSerializedEntity(
+            propertyMetadata, 
+            relationshipObject.data, 
+            includedResourceObjects, 
+            serializedEntityMap
+        );
 
         return value;
     }
@@ -787,10 +908,16 @@ export class JsonApiAdapter
      * @param {PropertyMetadata<TEntity, any>} propertyMetadata Relationship property metadata.
      * @param {Array<ResourceIdentifierObject>} resourceIdentifierObjects Resource identifier objects.
      * @param {Array<ResourceObject>} includedResourceObjects Included resource objects.
+     * @param {Map<ResourceObject, Entity>} serializedEntityMap Serialized entity map.
      * 
      * @returns {Array<Entity>} Serialized entities created from resource identifier objects.
      */
-    private createResourceIdentifierObjectSerializedEntities<TEntity extends Entity>(propertyMetadata: PropertyMetadata<TEntity, any>, resourceIdentifierObjects: Array<ResourceIdentifierObject>, includedResourceObjects: Array<ResourceObject>): Array<Entity>
+    private createResourceIdentifierObjectSerializedEntities<TEntity extends Entity>(
+        propertyMetadata: PropertyMetadata<TEntity, any>, 
+        resourceIdentifierObjects: Array<ResourceIdentifierObject>, 
+        includedResourceObjects: Array<ResourceObject>, 
+        serializedEntityMap: Map<ResourceObject, Entity>
+    ): Array<Entity>
     {
         const serializedEntities = new Array<Entity>();
         const collectionGenericMetadatas = propertyMetadata.genericMetadatas;
@@ -805,7 +932,7 @@ export class JsonApiAdapter
         for (const resourceIdentifierObject of resourceIdentifierObjects)
         {
             const resourceObject = this.linkResourceObject(resourceIdentifierObject, includedResourceObjects);
-            const serializedEntity = this.createResourceObjectSerializedEntity(entityTypeMetadata, resourceObject, includedResourceObjects);
+            const serializedEntity = this.createResourceObjectSerializedEntity(entityTypeMetadata, resourceObject, includedResourceObjects, serializedEntityMap);
 
             serializedEntities.push(serializedEntity);
         }
@@ -819,13 +946,19 @@ export class JsonApiAdapter
      * @param {PropertyMetadata<TEntity, any>} propertyMetadata Relationship property metadata.
      * @param {ResourceIdentifierObject} resourceIdentifierObject Resource identifier objects.
      * @param {Array<ResourceObject>} includedResourceObjects Included resource objects.
+     * @param {Map<ResourceObject, Entity>} serializedEntityMap Serialized entity map.
      * 
      * @returns {Entity} Serialized entity created from resource identifier object.
      */
-    private createResourceIdentifierObjectSerializedEntity<TEntity extends Entity>(propertyMetadata: PropertyMetadata<TEntity, any>, resourceIdentifierObject: ResourceIdentifierObject, includedResourceObjects: Array<ResourceObject>): Entity
+    private createResourceIdentifierObjectSerializedEntity<TEntity extends Entity>(
+        propertyMetadata: PropertyMetadata<TEntity, any>, 
+        resourceIdentifierObject: ResourceIdentifierObject, 
+        includedResourceObjects: Array<ResourceObject>, 
+        serializedEntityMap: Map<ResourceObject, Entity>
+    ): Entity
     {
         const resourceObject = this.linkResourceObject(resourceIdentifierObject, includedResourceObjects);
-        const serializedEntity = this.createResourceObjectSerializedEntity(propertyMetadata.typeMetadata, resourceObject, includedResourceObjects);
+        const serializedEntity = this.createResourceObjectSerializedEntity(propertyMetadata.typeMetadata, resourceObject, includedResourceObjects, serializedEntityMap);
 
         return serializedEntity;
     }
@@ -838,7 +971,10 @@ export class JsonApiAdapter
      * 
      * @returns {ResourceObject} Linked resource object.
      */
-    private linkResourceObject(resourceIdentifierObject: ResourceIdentifierObject, includedResourceObjects: Array<ResourceObject>): ResourceObject
+    private linkResourceObject(
+        resourceIdentifierObject: ResourceIdentifierObject, 
+        includedResourceObjects: Array<ResourceObject>,
+    ): ResourceObject
     {
         let resourceObject = resourceIdentifierObject as ResourceObject;
 

@@ -36,8 +36,7 @@ export class JsonApiIncludeExpressionVisitor extends JsonApiExpressionVisitor im
         }
         
         const parentInclude = this.visitIncludeExpression(includeExpression.parentIncludeExpression);
-        const separator = isNil(includeExpression.entityInfo) ? '.' : ',';
 
-        return `${parentInclude}${separator}${propertyPath}`;
+        return `${parentInclude},${propertyPath}`;
     }
 }
