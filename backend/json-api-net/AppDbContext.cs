@@ -8,6 +8,9 @@ namespace JsonApiNet
         public DbSet<Message> Messages => Set<Message>();
         public DbSet<User> Users => Set<User>();
         public DbSet<UserStatus> UserStatuses => Set<UserStatus>();
+        public DbSet<Human> Humans => Set<Human>();
+        public DbSet<Woman> Womans => Set<Woman>();
+        public DbSet<Man> Mans => Set<Man>();
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
@@ -42,6 +45,21 @@ namespace JsonApiNet
                 .HasOne(m => m.Parent)
                 .WithMany(p => p.Messages)
                 .HasForeignKey(m => m.MessageId);
+
+            modelBuilder.Entity<Human>()
+                .HasDiscriminator<string>("HumanType")
+                .HasValue<Man>("man")
+                .HasValue<Woman>("woman");
+
+            modelBuilder.Entity<Human>()
+                .HasOne(h => h.Father)
+                .WithMany()
+                .HasForeignKey(h => h.FatherId);
+
+            modelBuilder.Entity<Human>()
+                .HasOne(h => h.Mother)
+                .WithMany()
+                .HasForeignKey(h => h.MotherId);
 
             return;
         }

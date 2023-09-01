@@ -6,6 +6,7 @@ import { JsonApiEntityProvider, JsonApiNetFilterExpressionVisitor, JsonApiNetMet
 export class JsonApiEntity
 {
     @Property(Number) public id?: number;
+    @Property(String) public type?: string;
 }
 
 @Type()
@@ -21,6 +22,7 @@ export class UserStatus extends JsonApiEntity
     {
         super();
 
+        this.type = 'userStatuses';
         this.name = name;
         this.users = new EntityCollection<User>();
 
@@ -41,6 +43,7 @@ export class Company extends JsonApiEntity
     {
         super();
 
+        this.type = 'companies';
         this.name = name;
         this.users = new EntityCollection<User>();
 
@@ -67,6 +70,7 @@ export class Message extends JsonApiEntity
     {
         super();
 
+        this.type = 'messages';
         this.text = text;
         this.user = user;
         this.parent = parent;
@@ -88,6 +92,7 @@ export class User extends JsonApiEntity
     {
         super();
 
+        this.type = 'users';
         this.name = name;
         this.position = position;
         this.messages = new EntityCollection<Message>();
@@ -131,6 +136,69 @@ export class UserConfiguration implements TypeConfiguration<User>
 
 TypeManager.applyTypeConfiguration(User, new UserConfiguration());
 
+@Type()
+@JsonApiResource({
+    type: 'humans'
+})
+export class Human extends JsonApiEntity
+{
+    @Property(String) public name;
+    @Property(() => Man) public father?: Man;
+    @Property(() => Woman) public mother?: Woman;
+    @Property(EntityCollection, [() => Human]) public children: EntityCollection<Human>;
+
+    public constructor(name: string)
+    {
+        super();
+
+        this.type = 'humans';
+        this.name = name;
+        this.children = new EntityCollection<Human>();
+
+        return;
+    }
+}
+
+@Type()
+@JsonApiResource({
+    type: 'mans'
+})
+export class Man extends Human
+{
+    @Property(Boolean) public hasBeard: boolean;
+    @Property(() => Woman) public wife?: Woman;
+
+    public constructor(name: string, hasBeard: boolean)
+    {
+        super(name);
+
+        this.type = 'mans';
+        this.hasBeard = hasBeard;
+
+        return;
+    }
+}
+
+@Type()
+@JsonApiResource({
+    type: 'womans'
+})
+export class Woman extends Human
+{
+    @Property(String) public maidenName: string;
+    @Property(() => Man) public husband?: Man;
+
+    public constructor(name: string, maidenName: string)
+    {
+        super(name);
+
+        this.type = 'womans';
+        this.maidenName = maidenName;
+
+        return;
+    }
+}
+
 @Type({
     injectable: true
 })
@@ -140,6 +208,9 @@ export class SpecEntityStore extends EntityStore
     public readonly companySet: EntitySet<Company>;
     public readonly messageSet: EntitySet<Message>;
     public readonly userSet: EntitySet<User>;
+    public readonly humanSet: EntitySet<Human>;
+    public readonly manSet: EntitySet<Man>;
+    public readonly womanSet: EntitySet<Woman>;
 
     public constructor()
     {
@@ -155,6 +226,9 @@ export class SpecEntityStore extends EntityStore
         this.companySet = this.createEntitySet(Company);
         this.messageSet = this.createEntitySet(Message);
         this.userSet = this.createEntitySet(User);
+        this.humanSet = this.createEntitySet(Human);
+        this.manSet = this.createEntitySet(Man);
+        this.womanSet = this.createEntitySet(Woman);
 
         return;
     }

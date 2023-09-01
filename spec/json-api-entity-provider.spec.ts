@@ -1,4 +1,4 @@
-import { generateRandomString, Message, SpecEntityStore, User, UserStatus } from './entity-store.spec';
+import { generateRandomString, Man, Message, SpecEntityStore, User, UserStatus, Woman } from './entity-store.spec';
 
 describe('Json api entity provider', () =>
 {
@@ -305,5 +305,53 @@ describe('Json api entity provider', () =>
         expect(nextPaginatedUsers.length).toBe(1);
         expect(nextPaginatedUsers.hasNextPage()).toBeFalse();
         expect(nextPaginatedUsers.hasPrevPage()).toBeTrue();
+    });
+
+    it('should add and query polymorphic entities', async () =>
+    {
+        const specEntityStore = new SpecEntityStore();
+        const womanSet = specEntityStore.womanSet;
+        const manSet = specEntityStore.manSet;
+        const nameX = generateRandomString();
+        const nameY = generateRandomString();
+        const manX = new Man(nameX, true);
+        const manY = new Man(nameY, false);
+        const womanX = new Woman(nameX, 'test');
+        const womanY = new Woman(nameY, 'test');
+        const addedMans = await manSet.bulkAdd([manX, manY]);
+        const addedWomans = await womanSet.bulkAdd([womanX, womanY]);
+
+        expect(addedMans.length).toBe(2);
+        expect(addedWomans.length).toBe(2);
+
+        const paginatedMans = await manSet.filter((u, fe) => fe.in(u.name, [nameX, nameY])).paginate(p => p.size(2)).findAll();
+
+        expect(paginatedMans.totalLength).toBe(2);
+        expect(paginatedMans.length).toBe(2);
+        expect(paginatedMans.hasNextPage()).toBeFalse();
+        expect(paginatedMans.hasPrevPage()).toBeFalse();
+
+        const paginatedWomans = await womanSet.filter((u, fe) => fe.in(u.name, [nameX, nameY])).paginate(p => p.size(2)).findAll();
+
+        expect(paginatedWomans.totalLength).toBe(2);
+        expect(paginatedWomans.length).toBe(2);
+        expect(paginatedWomans.hasNextPage()).toBeFalse();
+        expect(paginatedWomans.hasPrevPage()).toBeFalse();
+
+        const nameZ = generateRandomString();
+        const manZ = new Man(nameZ, true);
+
+        manZ.father = manX;
+        manZ.mother = womanX;
+        manZ.children.push(womanY, manY);
+
+        const addedMan = await manSet.add(manZ);
+        const queriedMan = await manSet.filter((u, fe) => fe.eq(u.name, nameZ)).includeCollection(u => u.children).findOneOrFail();
+
+        expect(addedMan).toBe(manZ);
+        expect(addedMan.id).toBeDefined();
+        expect(addedMan.name).toBe(nameZ);
+        expect(queriedMan.children.filter(c => c.type === womanY.type).length).toBe(1);
+        expect(queriedMan.children.filter(c => c.type === manY.type).length).toBe(1);
     });
 });
