@@ -185,7 +185,7 @@ export class JsonApiEntityProvider implements EntityProvider
     {
         const entityInfo = saveCommand.entityInfo;
         const entity = saveCommand.entity;
-        const resourceIdentifier = this.jsonApiAdapter.extractResourceIdentifier(entityInfo.typeMetadata, entity);
+        const resourceIdentifier = this.jsonApiAdapter.extractResourceIdentifier(entity);
 
         if (isNil(resourceIdentifier))
         {

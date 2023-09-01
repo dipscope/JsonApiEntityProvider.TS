@@ -18,12 +18,4 @@ export interface JsonApiResourceOptions
      * @type {string}
      */
     route?: string;
-
-    /**
-     * Property name representing id if differs from one 
-     * described in specification.
-     * 
-     * @type {string}
-     */
-    id?: string;
 }

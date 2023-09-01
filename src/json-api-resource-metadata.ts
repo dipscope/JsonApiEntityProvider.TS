@@ -1,10 +1,9 @@
 import { isUndefined } from 'lodash';
 import { Entity } from '@dipscope/entity-store';
 import { TypeExtensionMetadata, TypeMetadata } from '@dipscope/type-manager';
-import { jsonApiResourceId } from './json-api-resource-id';
-import { jsonApiResourceIdKey } from './json-api-resource-id-key';
 import { JsonApiResourceOptions } from './json-api-resource-options';
 import { jsonApiResourceRouteKey } from './json-api-resource-route-key';
+import { jsonApiResourceType } from './json-api-resource-type';
 import { jsonApiResourceTypeKey } from './json-api-resource-type-key';
 
 /**
@@ -48,16 +47,6 @@ export class JsonApiResourceMetadata<TEntity extends Entity> extends TypeExtensi
     }
 
     /**
-     * Gets property name representing id.
-     * 
-     * @returns {string} Property name representing id.
-     */
-    public get id(): string
-    {
-        return this.typeMetadata.extractCustomOption(jsonApiResourceIdKey) ?? jsonApiResourceId;
-    }
-
-    /**
      * Configures type.
      * 
      * @param {string|undefined} type Type.
@@ -66,7 +55,10 @@ export class JsonApiResourceMetadata<TEntity extends Entity> extends TypeExtensi
      */
     public hasType(type: string | undefined): this
     {
-        this.typeMetadata.hasCustomOption(jsonApiResourceTypeKey, type);
+        this.typeMetadata.hasCustomOption(jsonApiResourceTypeKey, type)
+            .hasDiscriminator(jsonApiResourceType)
+            .hasDiscriminant(this.type)
+            .shouldPreserveDiscriminator();
 
         return this;
     }
@@ -84,21 +76,7 @@ export class JsonApiResourceMetadata<TEntity extends Entity> extends TypeExtensi
 
         return this;
     }
-
-    /**
-     * Configures id.
-     * 
-     * @param {string|undefined} id Id.
-     * 
-     * @returns {this} Current instance of json api resource metadata. 
-     */
-    public hasId(id: string | undefined): this
-    {
-        this.typeMetadata.hasCustomOption(jsonApiResourceIdKey, id);
-
-        return this;
-    }
-
+    
     /**
      * Configures json api resource metadata based on provided options.
      * 
@@ -116,11 +94,6 @@ export class JsonApiResourceMetadata<TEntity extends Entity> extends TypeExtensi
         if (!isUndefined(jsonApiResourceOptions.route))
         {
             this.hasRoute(jsonApiResourceOptions.route);
-        }
-
-        if (!isUndefined(jsonApiResourceOptions.id))
-        {
-            this.hasId(jsonApiResourceOptions.id);
         }
 
         return this;

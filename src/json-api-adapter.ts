@@ -7,8 +7,10 @@ import { JsonApiIncludeExpressionVisitor } from './json-api-include-expression-v
 import { JsonApiMetadataExtractor } from './json-api-metadata-extractor';
 import { JsonApiPaginateExpressionVisitor } from './json-api-paginate-expression-visitor';
 import { JsonApiPaginatedEntityCollection } from './json-api-paginated-entity-collection';
+import { jsonApiResourceId } from './json-api-resource-id';
 import { JsonApiResourceMetadata } from './json-api-resource-metadata';
 import { JsonApiResourceMetadataNotFoundError } from './json-api-resource-metadata-not-found-error';
+import { jsonApiResourceType } from './json-api-resource-type';
 import { JsonApiSortExpressionVisitor } from './json-api-sort-expression-visitor';
 import { AttributesObject } from './types/attributes-object';
 import { DocumentObject } from './types/document-object';
@@ -126,7 +128,7 @@ export class JsonApiAdapter
 
         return jsonApiResourceMetadata;
     }
-
+    
     /**
      * Extracts json api resource metadata.
      * 
@@ -146,18 +148,15 @@ export class JsonApiAdapter
     /**
      * Extracts resource identifier.
      * 
-     * @param {TypeMetadata<TEntity>} typeMetadata Type metadata.
      * @param {TEntity} entity Entity to extract identifier for.
      * 
      * @returns {string|undefined} Resource identifier.
      */
     public extractResourceIdentifier<TEntity extends Entity>(
-        typeMetadata: TypeMetadata<TEntity>, 
         entity: TEntity
     ): string | undefined
     {
-        const jsonApiResourceMetadata = this.extractJsonApiResourceMetadataOrFail(typeMetadata);
-        const resourceIdentifier = entity[jsonApiResourceMetadata.id];
+        const resourceIdentifier = entity[jsonApiResourceId];
 
         if (isNil(resourceIdentifier))
         {
@@ -198,7 +197,7 @@ export class JsonApiAdapter
     ): LinkObject
     {
         const resourceLinkObject = this.createResourceLinkObject(typeMetadata);
-        const resourceIdentifier = isString(entityOrIdentifier) ? entityOrIdentifier : toString(this.extractResourceIdentifier(typeMetadata, entityOrIdentifier));
+        const resourceIdentifier = isString(entityOrIdentifier) ? entityOrIdentifier : toString(this.extractResourceIdentifier(entityOrIdentifier));
         const linkObject = `${resourceLinkObject}/${resourceIdentifier}`;
 
         return linkObject;
@@ -407,10 +406,9 @@ export class JsonApiAdapter
         entity: Nullable<TEntity>
     ): RelationshipObject
     {
-        const jsonApiResourceMetadata = this.extractJsonApiResourceMetadataOrFail(typeMetadata);
         const serializerContext = typeMetadata.typeManager.defineSerializerContext(typeMetadata.typeFn, entity);
         const serializedEntity = serializerContext.serialize(entity);
-        const relationshipObject = this.createValueRelationshipObject(jsonApiResourceMetadata, serializedEntity);
+        const relationshipObject = this.createValueRelationshipObject(serializedEntity);
 
         return relationshipObject;
     }
@@ -428,10 +426,9 @@ export class JsonApiAdapter
         entityCollection: EntityCollection<TEntity>
     ): RelationshipObject
     {
-        const jsonApiResourceMetadata = this.extractJsonApiResourceMetadataOrFail(typeMetadata);
         const serializerContext = typeMetadata.typeManager.defineSerializerContext(EntityCollection, entityCollection, [typeMetadata.typeFn]);
         const serializedEntityCollection = serializerContext.serialize(entityCollection);
-        const relationshipObject = this.createValueRelationshipObject(jsonApiResourceMetadata, serializedEntityCollection);
+        const relationshipObject = this.createValueRelationshipObject(serializedEntityCollection);
 
         return relationshipObject;
     }
@@ -514,12 +511,13 @@ export class JsonApiAdapter
         serializedEntity: Entity
     ): ResourceObject
     {
-        const jsonApiResourceMetadata = this.extractJsonApiResourceMetadataOrFail(typeMetadata);
-        const resourceObject = { type: jsonApiResourceMetadata.type } as ResourceObject;
+        const serializedEntitySerializerContext = typeMetadata.typeManager.defineSerializerContext(typeMetadata.typeFn, serializedEntity);
+        const serializerContext = serializedEntitySerializerContext.polymorphic ? serializedEntitySerializerContext.definePolymorphicSerializerContext(serializedEntity) : serializedEntitySerializerContext;
+        const resourceObject = this.createSerializedEntityResourceIdentifierObject(serializedEntity) as ResourceObject;
         const attributesObject = {} as AttributesObject;
         const relationshipsObject = {} as RelationshipsObject;
 
-        for (const propertyMetadata of typeMetadata.propertyMetadataMap.values())
+        for (const propertyMetadata of serializerContext.typeMetadata.propertyMetadataMap.values())
         {
             if (propertyMetadata.serializationConfigured && !propertyMetadata.serializable)
             {
@@ -534,10 +532,8 @@ export class JsonApiAdapter
                 continue;
             }
 
-            if (serializedPropertyName === jsonApiResourceMetadata.id)
+            if (serializedPropertyName === jsonApiResourceId || serializedPropertyName === jsonApiResourceType)
             {
-                resourceObject.id = toString(propertyValue);
-
                 continue;
             }
 
@@ -551,7 +547,7 @@ export class JsonApiAdapter
                 continue;
             }
 
-            const relationshipObject = this.createValueRelationshipObject(relationshipJsonApiResourceMetadata, propertyValue);
+            const relationshipObject = this.createValueRelationshipObject(propertyValue);
 
             if (isArray(relationshipObject.data) && !this.allowToManyRelationshipReplacement)
             {
@@ -608,13 +604,11 @@ export class JsonApiAdapter
     /**
      * Creates relationship object from provided value.
      * 
-     * @param {JsonApiResourceMetadata<TEntity>} jsonApiResourceMetadata Json api resource metadata.
      * @param {undefined|Nullable<Entity>|Array<Entity>} value Relationship value.
      * 
      * @returns {RelationshipObject} Relationship object created from value.
      */
-    private createValueRelationshipObject<TEntity extends Entity>(
-        jsonApiResourceMetadata: JsonApiResourceMetadata<TEntity>, 
+    private createValueRelationshipObject(
         value: undefined | Nullable<Entity> | Array<Entity>
     ): RelationshipObject
     {
@@ -634,12 +628,12 @@ export class JsonApiAdapter
 
         if (isArray(value))
         {
-            relationshipObject.data = this.createSerializedEntityResourceIdentifierObjects(jsonApiResourceMetadata, value);
+            relationshipObject.data = this.createSerializedEntityResourceIdentifierObjects(value);
 
             return relationshipObject;
         }
 
-        relationshipObject.data = this.createSerializedEntityResourceIdentifierObject(jsonApiResourceMetadata, value);
+        relationshipObject.data = this.createSerializedEntityResourceIdentifierObject(value);
 
         return relationshipObject;
     }
@@ -647,13 +641,11 @@ export class JsonApiAdapter
     /**
      * Creates resource identifier objects from provided serialized entities.
      * 
-     * @param {JsonApiResourceMetadata<TEntity>} jsonApiResourceMetadata Json api resource metadata.
      * @param {Array<Entity>} serializedEntities Serialized entities.
      * 
      * @returns {Array<ResourceIdentifierObject>} Resource identifier objects.
      */
-    private createSerializedEntityResourceIdentifierObjects<TEntity extends Entity>(
-        jsonApiResourceMetadata: JsonApiResourceMetadata<TEntity>, 
+    private createSerializedEntityResourceIdentifierObjects(
         serializedEntities: Array<Entity>
     ): Array<ResourceIdentifierObject>
     {
@@ -661,7 +653,7 @@ export class JsonApiAdapter
 
         for (const serializedEntity of serializedEntities)
         {
-            const resourceIdentifierObject = this.createSerializedEntityResourceIdentifierObject(jsonApiResourceMetadata, serializedEntity);
+            const resourceIdentifierObject = this.createSerializedEntityResourceIdentifierObject(serializedEntity);
 
             resourceIdentifierObjects.push(resourceIdentifierObject);
         }
@@ -672,17 +664,20 @@ export class JsonApiAdapter
     /**
      * Creates resource identifier object from provided serialized entity.
      * 
-     * @param {JsonApiResourceMetadata<TEntity>} jsonApiResourceMetadata Json api resource metadata.
      * @param {Entity} serializedEntity Serialized entity.
      * 
      * @returns {ResourceIdentifierObject} Resource identifier object.
      */
-    private createSerializedEntityResourceIdentifierObject<TEntity extends Entity>(
-        jsonApiResourceMetadata: JsonApiResourceMetadata<TEntity>, 
+    private createSerializedEntityResourceIdentifierObject(
         serializedEntity: Entity
     ): ResourceIdentifierObject
     {
-        const resourceIdentifierObject = { type: jsonApiResourceMetadata.type, id: toString(serializedEntity[jsonApiResourceMetadata.id]) } as ResourceIdentifierObject;
+        const resourceIdentifierObject = { type: serializedEntity[jsonApiResourceType] } as ResourceIdentifierObject;
+        
+        if (!isNil(serializedEntity[jsonApiResourceId])) 
+        {
+            resourceIdentifierObject.id = toString(serializedEntity[jsonApiResourceId]);
+        }
 
         return resourceIdentifierObject;
     }
@@ -809,14 +804,15 @@ export class JsonApiAdapter
             return mappedSerializedEntity;
         }
 
-        const jsonApiResourceMetadata = this.extractJsonApiResourceMetadataOrFail(typeMetadata);
+        const resourceObjectSerializerContext = typeMetadata.typeManager.defineSerializerContext(typeMetadata.typeFn, resourceObject);
+        const serializerContext = resourceObjectSerializerContext.polymorphic ? resourceObjectSerializerContext.definePolymorphicSerializerContext(resourceObject) : resourceObjectSerializerContext;
         const serializedEntity = {} as Entity;
         const attributes = resourceObject.attributes ?? {} as AttributesObject;
         const relationships = resourceObject.relationships ?? {} as RelationshipsObject;
         
         serializedEntityMap.set(resourceObject, serializedEntity);
 
-        for (const propertyMetadata of typeMetadata.propertyMetadataMap.values())
+        for (const propertyMetadata of serializerContext.typeMetadata.propertyMetadataMap.values())
         {
             if (propertyMetadata.serializationConfigured && !propertyMetadata.deserializable)
             {
@@ -824,13 +820,20 @@ export class JsonApiAdapter
             }
 
             const serializedPropertyName = propertyMetadata.serializedPropertyName;
-            
-            if (serializedPropertyName === jsonApiResourceMetadata.id)
+
+            if (serializedPropertyName === jsonApiResourceId)
             {
                 const numericId = propertyMetadata.typeMetadata.typeFn === Number;
                 const id = numericId ? toNumber(resourceObject.id) : resourceObject.id;
 
-                serializedEntity[jsonApiResourceMetadata.id] = id;
+                serializedEntity[jsonApiResourceId] = id;
+
+                continue;
+            }
+
+            if (serializedPropertyName === jsonApiResourceType)
+            {
+                serializedEntity[jsonApiResourceType] = resourceObject.type;
 
                 continue;
             }
