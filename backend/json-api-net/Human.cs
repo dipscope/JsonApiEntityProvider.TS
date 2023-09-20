@@ -19,5 +19,9 @@ namespace JsonApiNet
 
         [HasMany]
         public ISet<Human> Children { get; set; } = new HashSet<Human>();
+
+        [HasOne]
+        public Human? Spouse { get; set; }
+        public int? SpouseId { get; set; }
     }
 }

@@ -55,7 +55,7 @@ async function getCurrentMessageCount(relationship: JsonApiToManyRelationship<Us
     return elements.length;
 }
 
-describe('Json api to many relationship provider', () => 
+describe('Json api morph to many relationship provider', () => 
 {
     it('should fetch existing entities', async () =>
     {
@@ -357,9 +357,10 @@ describe('Json api to many relationship provider', () =>
 
         // ! Function Under Test !
         // Let's check that the message was linked correctly.
-        const finalData = await userMessages.filter((m, eb) => eb.eq(m.id, message.id))
+        const finalData = await userMessages
+            .filter((m, eb) => eb.eq(m.id, message.id ?? 0))
             .includeCollection(x => x.messages)
-            .thenInclude(x => x.parent)
+            .thenInclude(x => x.parent)         
             .includeCollection(x => x.messages)
             .thenInclude(x => x.user)
             .findOne();

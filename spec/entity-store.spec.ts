@@ -145,6 +145,7 @@ export class Human extends JsonApiEntity
     @Property(String) public name;
     @Property(() => Man) public father?: Man;
     @Property(() => Woman) public mother?: Woman;
+    @Property(() => Human) public spouse?: Human;
     @Property(EntityCollection, [() => Human]) public children: EntityCollection<Human>;
 
     public constructor(name: string)

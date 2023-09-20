@@ -1,0 +1,408 @@
+import { EntitySet } from '@dipscope/entity-store';
+import { JsonApiToManyRelationship } from '../src';
+import { generateRandomString, SpecEntityStore, Human, Woman, Man } from './entity-store.spec';
+
+function generateRandomBool(): boolean
+{
+    return Math.round(Math.random()) === 1;
+}
+async function addHuman(humanSet: EntitySet<Human>, name?: string, sex?: 'Man'|'Woman') 
+{
+    sex ??= generateRandomBool() ? 'Man' : 'Woman';
+    name ??= generateRandomString();
+
+    const human = sex === 'Man' ? new Man(name, generateRandomBool()) : new Woman(name, generateRandomString());
+    const remoteHuman = await humanSet.add(human);
+
+    expect(remoteHuman).toBe(human);
+
+    return remoteHuman;
+}
+
+async function setupRelationshipTest() 
+{
+    // Get Entity Store Objects.
+    const specEntityStore = new SpecEntityStore();
+    const humanSet = specEntityStore.humanSet;
+    const jsonApiEntityProvider = specEntityStore.jsonApiEntityProvider;
+
+    // Create a Human.
+    const mother = await addHuman(humanSet, undefined, 'Woman') as Woman;
+    const father = await addHuman(humanSet, undefined, 'Man') as Man;
+
+    // Create 3 initial Children.
+    const motherChildren = jsonApiEntityProvider.createJsonApiToManyRelationship(humanSet, mother, u => u.children);
+    const setupCount = 3;
+    const children = [...Array(setupCount).keys()].map(() => createChild(mother, father));
+    const addedChildrens = await humanSet.bulkAdd(children);
+
+    expect(addedChildrens.length).toBe(setupCount);
+
+    for(let i = 0; i < setupCount; i ++)
+    {
+        expect(addedChildrens.at(i)).toBe(children[i])
+    }
+
+    return { specEntityStore, humanSet, jsonApiEntityProvider, mother, father, motherChildren, addedChildrens, setupCount };
+}
+
+function createChild(mother?: Woman, father?: Man, name?: string, sex?: 'Man'|'Woman') 
+{
+    sex ??= generateRandomBool() ? 'Man' : 'Woman';
+    name ??= generateRandomString();
+
+    const child = sex === 'Man' ?new Man(name, generateRandomBool()) : new Woman(name, generateRandomString());
+    child.mother = mother;
+    child.father = father;
+    return child;
+}
+
+async function getCurrentChildrenCount(relationship: JsonApiToManyRelationship<Human, Human>) 
+{
+    const elements = await relationship.findAll();
+
+    return elements.length;
+}
+
+describe('Json api to many relationship provider', () => 
+{
+    it('should fetch existing entities', async () =>
+    {
+        const { humanSet, motherChildren, addedChildrens: addedChildren, mother, father, setupCount } = await setupRelationshipTest();
+
+        // This is a pre-check for validating that setup was ran correctly.
+        const initialCount = await getCurrentChildrenCount(motherChildren);
+
+        expect(initialCount).toBe(setupCount);
+
+        // Create a new child, which isn't attached to the mother.
+        // To do this, we'll need to make a different mother.
+        const newMother = await addHuman(humanSet, undefined, 'Woman') as Woman;
+        const child = createChild(newMother, father);
+
+        await humanSet.add(child);
+
+        // ! Function Under Test !
+        // Let's check that the children was linked correctly.
+        const finalData = await motherChildren.findAll();
+
+        expect(finalData.length).toBe(initialCount);
+
+        // Let's also check that our queried data is correct.
+        // Sort Data.
+        const sortedFinalData = finalData.sort((a, b) => (a.name > b.name ? -1 : 1));
+        const sortedChildren = addedChildren.sort((a, b) => (a.name > b.name ? -1 : 1));
+
+        for (let i = 0; i < setupCount; i++)
+        {
+            const actual = sortedFinalData.at(i);
+            const expected = sortedChildren.at(i);
+
+            if (actual && expected)
+            {
+                actual.mother = mother;
+                expected.father = father;
+            }
+
+            expect(actual).toEqual(expected);
+        }
+    });
+
+    it('should add new entities', async () =>
+    {
+        const { humanSet, motherChildren, father, setupCount } = await setupRelationshipTest();
+
+        // This is a pre-check for validating that setup was ran correctly.
+        const initialCount = await getCurrentChildrenCount(motherChildren);
+
+        expect(initialCount).toBe(setupCount);
+
+        // Create a new children, which isn't attached to human.
+        // To do this, we'll need to make a different human.
+        const otherMother = await addHuman(humanSet, undefined, 'Woman') as Woman;
+        const child = createChild(otherMother, father);
+        const addedChildren = await humanSet.add(child);
+
+        // This is a intermittent check for validating that children wasn't linked to human prematurely.
+        const intermittentCount = await getCurrentChildrenCount(motherChildren);
+
+        expect(intermittentCount).toBe(initialCount);
+
+        // ! Function Under Test !
+        await motherChildren.add(addedChildren);
+
+        // Let's check that the children was linked correctly.
+        const finalData = await motherChildren.findAll();
+
+        expect(finalData.length).toBe(initialCount + 1);
+    });
+
+    it('should update existing entities', async () =>
+    {
+        const { humanSet, motherChildren, father, setupCount } = await setupRelationshipTest();
+
+        // This is a pre-check for validating that setup was ran correctly.
+        const initialCount = await getCurrentChildrenCount(motherChildren);
+
+        expect(initialCount).toBe(setupCount);
+
+        // Create a new children, which isn't attached to human.
+        // To do this, we'll need to make a different human.
+        const otherMother = await addHuman(humanSet, undefined, 'Woman') as Woman;
+        const children = createChild(otherMother, father);
+        const addedChildren = await humanSet.add(children);
+
+        // This is a intermittent check for validating that children wasn't linked to human prematurely.
+        const intermittentCount = await getCurrentChildrenCount(motherChildren);
+
+        expect(intermittentCount).toBe(initialCount);
+
+        // ! Function Under Test !
+        await motherChildren.update(addedChildren);
+
+        // Let's check that the children was linked correctly.
+        const finalData = await motherChildren.findAll();
+
+        expect(finalData.length).toBe(1);
+    });
+
+    it('should remove existing entities', async () =>
+    {
+        const { motherChildren, addedChildrens, setupCount } = await setupRelationshipTest();
+
+        // This is a pre-check for validating that setup was ran correctly
+        const initialCount = await getCurrentChildrenCount(motherChildren);
+
+        expect(initialCount).toBe(setupCount);
+
+        const addedChildren = addedChildrens.at(0);
+
+        expect(addedChildren).toBeDefined(); // ! Required for code assumptions.
+
+        // ! Function Under Test !
+        if (addedChildren) 
+        {
+            await motherChildren.remove(addedChildren);
+        }
+
+        // Let's check that the children was unlinked correctly.
+        const finalData = await motherChildren.findAll();
+
+        expect(finalData.length).toBe(initialCount - 1);
+    });
+
+    it('should bulk add new entities', async () =>
+    {
+        const { humanSet, motherChildren, father, setupCount } = await setupRelationshipTest();
+
+        // This is a pre-check for validating that setup was ran correctly.
+        const initialCount = await getCurrentChildrenCount(motherChildren);
+
+        expect(initialCount).toBe(setupCount);
+
+        // Create a new children, which isn't attached to human.
+        // To do this, we'll need to make a different human.
+        const otherMother = await addHuman(humanSet, undefined, 'Woman') as Woman;
+        const childrens = [...Array(setupCount).keys()].map(() => createChild(otherMother, father));
+        const addedChildrens = await humanSet.bulkAdd(childrens);
+
+        // This is a intermittent check for validating that children wasn't linked to human prematurely.
+        const intermittentCount = await getCurrentChildrenCount(motherChildren);
+
+        expect(intermittentCount).toBe(initialCount);
+
+        // ! Function Under Test !
+        await motherChildren.bulkAdd(addedChildrens);
+
+        // Let's check that the children was linked correctly.
+        const finalData = await motherChildren.findAll();
+
+        expect(finalData.length).toBe(initialCount + setupCount);
+    });
+
+    it('should bulk update existing entities', async () =>
+    {
+        const { humanSet, motherChildren, father, setupCount } = await setupRelationshipTest();
+
+        // This is a pre-check for validating that setup was ran correctly.
+        const initialCount = await getCurrentChildrenCount(motherChildren);
+
+        expect(initialCount).toBe(setupCount);
+
+        // Create a new children, which isn't attached to human.
+        // To do this, we'll need to make a different human.
+        const otherMother = await addHuman(humanSet, undefined, 'Woman') as Woman;
+        const childrens = [...Array(setupCount - 1).keys()].map(() => createChild(otherMother, father));
+        const addedChildrens = await humanSet.bulkAdd(childrens);
+
+        // This is a intermittent check for validating that children wasn't linked to human prematurely.
+        const intermittentCount = await getCurrentChildrenCount(motherChildren);
+
+        expect(intermittentCount).toBe(initialCount);
+
+        // ! Function Under Test !
+        await motherChildren.bulkUpdate(addedChildrens);
+
+        // Let's check that the children was linked correctly.
+        const finalData = await motherChildren.findAll();
+
+        expect(finalData.length).toBe(setupCount - 1);
+    });
+
+    it('should bulk remove existing entities', async () =>
+    {
+        const { motherChildren, addedChildrens, setupCount } = await setupRelationshipTest();
+
+        // This is a pre-check for validating that setup was ran correctly.
+        const initialCount = await getCurrentChildrenCount(motherChildren);
+
+        expect(initialCount).toBe(setupCount);
+
+        const toRemoveChildrens = [...Array(setupCount - 1).keys()].map(i => addedChildrens.at(i)).filter(x => x ? true : false);
+
+        expect(toRemoveChildrens.length).toBeGreaterThan(0); // ! Required for code assumptions.
+
+        // ! Function Under Test !
+        await motherChildren.bulkRemove(toRemoveChildrens as Human[]);
+
+        // Let's check that the children was unlinked correctly.
+        const finalData = await motherChildren.findAll();
+
+        expect(finalData.length).toBe(1);
+    });
+
+    it('should sort existing entities in ascending order', async () =>
+    {
+        const { mother, humanSet, motherChildren, setupCount } = await setupRelationshipTest();
+
+        // This is a pre-check for validating that setup was ran correctly.
+        const initialCount = await getCurrentChildrenCount(motherChildren);
+
+        expect(initialCount).toBe(setupCount);
+
+        // Our random strings will start with an ISO string.
+        const childrenA = createChild(mother, undefined, '00');
+        const addedChildrenA = await humanSet.add(childrenA);
+        const childrenZ = createChild(mother, undefined, 'ZULU');
+        const addedChildrenZ = await humanSet.add(childrenZ);
+
+        // ! Function Under Test !
+        // Let's check that the children was linked correctly.
+        const finalData = await motherChildren.sortByAsc(x => x.name).findAll();
+
+        expect(finalData.length).toBe(initialCount + 2);
+        expect(finalData.first()?.id).toBe(addedChildrenA.id);
+        expect(finalData.last()?.id).toBe(addedChildrenZ.id);
+    });
+
+    it('should sort existing entities in descending order', async () =>
+    {
+        const { mother, humanSet, motherChildren, setupCount } = await setupRelationshipTest();
+
+        // This is a pre-check for validating that setup was ran correctly.
+        const initialCount = await getCurrentChildrenCount(motherChildren);
+
+        expect(initialCount).toBe(setupCount);
+
+        // Our random strings will start with an ISO string.
+        const childrenA = createChild(mother, undefined, '00');
+        const addedChildrenA = await humanSet.add(childrenA);
+        const childrenZ = createChild(mother, undefined, 'ZULU');
+        const addedChildrenZ = await humanSet.add(childrenZ);
+
+        // ! Function Under Test !
+        // Let's check that the children was linked correctly.
+        const finalData = await motherChildren.sortByDesc(x => x.name).findAll();
+
+        expect(finalData.length).toBe(initialCount + 2);
+        expect(finalData.first()?.id).toBe(addedChildrenZ.id);
+        expect(finalData.last()?.id).toBe(addedChildrenA.id);
+    });
+
+    it('should include relationships', async () =>
+    {
+        const { mother, motherChildren, setupCount } = await setupRelationshipTest();
+
+        // This is a pre-check for validating that setup was ran correctly.
+        const initialCount = await getCurrentChildrenCount(motherChildren);
+
+        expect(initialCount).toBe(setupCount);
+
+        // ! Function Under Test !
+        // Let's check that the children was linked correctly.
+        const finalData = await motherChildren.include(x => x.children).findAll();
+
+        expect(finalData.length).toBe(initialCount);
+
+        // Let's also check that our queried data is correct.
+        for (let i = 0; i < setupCount; i++)
+        {
+            expect(finalData.at(i)?.mother).toEqual(mother);
+        }
+    });
+    
+    it('should include a collection of relationships', async () =>
+    {
+        const { mother, father, motherChildren, humanSet, setupCount, addedChildrens } = await setupRelationshipTest();
+
+        // This is a pre-check for validating that setup was ran correctly.
+        const initialCount = await getCurrentChildrenCount(motherChildren);
+
+        expect(initialCount).toBe(setupCount);
+
+        const children = addedChildrens.at(0);
+
+        expect(children).toBeDefined();
+
+        if(!children?.id) 
+        { 
+            return;
+        }
+
+        const reply = createChild(mother, father);
+        const addedReply = await humanSet.add(reply);
+
+        expect(addedReply.mother).toBe(mother);
+
+        // ! Function Under Test !
+        // Let's check that the children was linked correctly.
+        const finalData = await motherChildren
+            .filter((m, eb) => eb.eq(m.id, children.id ?? 0))
+            .include(x => x.mother)   
+            .thenIncludeCollection(x => x.children)      
+            .thenInclude(x => x.father)
+            .findOne();
+        
+        expect(finalData?.id).toBe(children.id);
+        expect(finalData?.mother?.children.length).toBe(1);
+        expect(finalData?.mother?.children.at(0)?.id).toBe(addedReply.id);
+    });
+
+    it('should paginate existing entities', async () => 
+    {
+        const { mother, father, humanSet, motherChildren, setupCount } = await setupRelationshipTest();
+        const paginationSetSize = 20;
+        const paginationSampleSize = 10;
+        const secondToLastPage = paginationSetSize/paginationSampleSize;
+        const lastPage = secondToLastPage + 1;
+
+        // This is a pre-check for validating that setup was ran correctly.
+        const initialCount = await getCurrentChildrenCount(motherChildren);
+
+        expect(initialCount).toBe(setupCount);
+
+        // Create a lot of childrens.
+        const childrens = [...Array(paginationSetSize).keys()].map(() => createChild(mother, father));
+        await humanSet.bulkAdd(childrens);
+
+        // ! Function Under Test !
+        // Let's check that the children was linked correctly.
+        const firstPageData = await motherChildren.paginate(x => x.pageSize(1, paginationSampleSize)).findAll();
+        const pageNeg1Data = await motherChildren.paginate(x => x.pageSize(secondToLastPage, paginationSampleSize)).findAll();
+        const lastPageData = await motherChildren.paginate(x => x.pageSize(lastPage, paginationSampleSize)).findAll();
+
+        expect(firstPageData.length).toBe(paginationSampleSize);
+        expect(pageNeg1Data.length).toBe(paginationSampleSize);
+        expect(lastPageData.length).toBe(setupCount);
+    });
+});
