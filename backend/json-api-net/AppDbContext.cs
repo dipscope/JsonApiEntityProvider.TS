@@ -61,6 +61,11 @@ namespace JsonApiNet
                 .WithMany()
                 .HasForeignKey(h => h.MotherId);
 
+            modelBuilder.Entity<Human>()
+                .HasOne(h => h.Spouse)
+                .WithMany()
+                .HasForeignKey(h => h.SpouseId);
+
             return;
         }
     }
