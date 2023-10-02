@@ -1,10 +1,11 @@
 import { EntitySet } from '@dipscope/entity-store';
-import { generateRandomString, SpecEntityStore, Human, Man, Woman } from './entity-store.spec';
+import { generateRandomString, Human, Man, SpecEntityStore, Woman } from './entity-store.spec';
 
 function generateRandomBool(): boolean
 {
     return Math.round(Math.random()) === 1;
 }
+
 async function addHuman(humanSet: EntitySet<Human>, name?: string, sex?: 'Man'|'Woman') 
 {
     sex ??= generateRandomBool() ? 'Man' : 'Woman';

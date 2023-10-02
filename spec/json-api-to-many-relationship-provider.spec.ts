@@ -360,7 +360,7 @@ describe('Json api morph to many relationship provider', () =>
         const finalData = await userMessages
             .filter((m, eb) => eb.eq(m.id, message.id ?? 0))
             .includeCollection(x => x.messages)
-            .thenInclude(x => x.parent)         
+            .thenInclude(x => x.parent)
             .includeCollection(x => x.messages)
             .thenInclude(x => x.user)
             .findOne();
