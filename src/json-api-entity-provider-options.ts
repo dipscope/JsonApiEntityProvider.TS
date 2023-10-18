@@ -61,4 +61,9 @@ export interface JsonApiEntityProviderOptions
      * @type {boolean}
      */
     allowToManyRelationshipReplacement?: boolean;
+    
+    /**
+     * The browser cookie access policy
+     */
+    credentials?: RequestCredentials;
 }

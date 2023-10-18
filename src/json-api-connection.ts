@@ -43,6 +43,11 @@ export class JsonApiConnection
      * @type {Headers}
      */
     public readonly headers: Headers;
+
+    /**
+     * The browser cookie access policy
+     */
+    public readonly credentials: RequestCredentials;
     
     /**
      * Constructor.
@@ -54,13 +59,15 @@ export class JsonApiConnection
     public constructor(
         baseUrl: string, 
         jsonApiRequestInterceptor: JsonApiRequestInterceptor, 
-        jsonApiResponseInterceptor: JsonApiResponseInterceptor
+        jsonApiResponseInterceptor: JsonApiResponseInterceptor,
+        credentials: RequestCredentials = 'same-origin',
     )
     {
         this.baseUrl = baseUrl.replace(new RegExp('\\/+$', 'g'), '');
         this.jsonApiRequestInterceptor = jsonApiRequestInterceptor;
         this.jsonApiResponseInterceptor = jsonApiResponseInterceptor;
         this.headers = this.buildHeaders();
+        this.credentials = credentials;
 
         return;
     }
@@ -91,7 +98,7 @@ export class JsonApiConnection
     {
         const href = this.extractHref(linkObject);
         const headers = new Headers(this.headers);
-        const request = new Request(href, { headers: headers, credentials: 'same-origin', method: 'GET' });
+        const request = new Request(href, { headers: headers, credentials: this.credentials, method: 'GET' });
         const interceptedRequest = this.jsonApiRequestInterceptor(request);
         const response = await fetch(interceptedRequest);
         const interceptedResponse = this.jsonApiResponseInterceptor(response);
@@ -121,7 +128,7 @@ export class JsonApiConnection
         const href = this.extractHref(linkObject);
         const body = JSON.stringify(documentObject);
         const headers = new Headers(this.headers);
-        const request = new Request(href, { headers: headers, credentials: 'same-origin', method: 'POST', body: body });
+        const request = new Request(href, { headers: headers, credentials: this.credentials, method: 'POST', body: body });
         const interceptedRequest = this.jsonApiRequestInterceptor(request);
         const response = await fetch(interceptedRequest);
         const interceptedResponse = this.jsonApiResponseInterceptor(response);
@@ -158,7 +165,7 @@ export class JsonApiConnection
         const href = this.extractHref(linkObject);
         const body = JSON.stringify(documentObject);
         const headers = new Headers(this.headers);
-        const request = new Request(href, { headers: headers, credentials: 'same-origin', method: 'PATCH', body: body });
+        const request = new Request(href, { headers: headers, credentials: this.credentials, method: 'PATCH', body: body });
         const interceptedRequest = this.jsonApiRequestInterceptor(request);
         const response = await fetch(interceptedRequest);
         const interceptedResponse = this.jsonApiResponseInterceptor(response);
@@ -195,7 +202,7 @@ export class JsonApiConnection
         const href = this.extractHref(linkObject);
         const body = isEmpty(documentObject) ? undefined : JSON.stringify(documentObject);
         const headers = new Headers(this.headers);
-        const request = new Request(href, { headers: headers, credentials: 'same-origin', method: 'DELETE', body: body });
+        const request = new Request(href, { headers: headers, credentials: this.credentials, method: 'DELETE', body: body });
         const interceptedRequest = this.jsonApiRequestInterceptor(request);
         const response = await fetch(interceptedRequest);
         const interceptedResponse = this.jsonApiResponseInterceptor(response);

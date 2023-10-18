@@ -53,8 +53,9 @@ export class JsonApiEntityProvider implements EntityProvider
         const jsonApiPaginateExpressionVisitor = jsonApiEntityProviderOptions.jsonApiPaginateExpressionVisitor ?? new JsonApiPaginateExpressionVisitor();
         const jsonApiSortExpressionVisitor = new JsonApiSortExpressionVisitor();
         const jsonApiIncludeExpressionVisitor = new JsonApiIncludeExpressionVisitor();
+        const credentials = jsonApiEntityProviderOptions.credentials ?? 'same-origin';
         
-        this.jsonApiConnection = new JsonApiConnection(jsonApiEntityProviderOptions.baseUrl, jsonApiRequestInterceptor, jsonApiResponseInterceptor);
+        this.jsonApiConnection = new JsonApiConnection(jsonApiEntityProviderOptions.baseUrl, jsonApiRequestInterceptor, jsonApiResponseInterceptor, credentials);
         this.jsonApiAdapter = new JsonApiAdapter(this.jsonApiConnection, jsonApiMetadataExtractor, jsonApiFilterExpressionVisitor, jsonApiPaginateExpressionVisitor, jsonApiSortExpressionVisitor, jsonApiIncludeExpressionVisitor, allowToManyRelationshipReplacement);
 
         return;
