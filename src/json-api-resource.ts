@@ -1,5 +1,5 @@
 import { Entity } from '@dipscope/entity-store';
-import { TypeFn, TypeManager } from '@dipscope/type-manager';
+import { TypeDecorator, TypeFn, TypeManager } from '@dipscope/type-manager';
 import { JsonApiResourceMetadata } from './json-api-resource-metadata';
 import { JsonApiResourceOptions } from './json-api-resource-options';
 
@@ -8,9 +8,9 @@ import { JsonApiResourceOptions } from './json-api-resource-options';
  * 
  * @param {TypeOptions<TType>} jsonApiResourceOptions Json api resource options.
  *
- * @returns {ClassDecorator} Class decorator.
+ * @returns {TypeDecorator} Type decorator.
  */
-export function JsonApiResource<TEntity extends Entity>(jsonApiResourceOptions: JsonApiResourceOptions): ClassDecorator
+export function JsonApiResource<TEntity extends Entity>(jsonApiResourceOptions: JsonApiResourceOptions): TypeDecorator
 {
     return function (target: any): any
     {
