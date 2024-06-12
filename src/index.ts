@@ -14,6 +14,7 @@ export * from './json-api-include-expression-visitor';
 export * from './json-api-metadata-extractor';
 export * from './json-api-paginate-expression-visitor';
 export * from './json-api-paginated-entity-collection';
+export * from './json-api-relationship-path';
 export * from './json-api-request-interceptor';
 export * from './json-api-resource-id';
 export * from './json-api-resource-metadata';

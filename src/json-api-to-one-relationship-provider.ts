@@ -5,6 +5,7 @@ import { BulkUpdateCommand, QueryCommand, RemoveCommand, SaveCommand, UpdateComm
 import { PropertyMetadata, TypeMetadata } from '@dipscope/type-manager';
 import { JsonApiAdapter } from './json-api-adapter';
 import { JsonApiConnection } from './json-api-connection';
+import { jsonApiRelationshipPath } from './json-api-relationship-path';
 
 /**
  * Json api to one relationship provider.
@@ -49,6 +50,13 @@ export class JsonApiToOneRelationshipProvider implements EntityProvider
     public readonly propertyMetadata: PropertyMetadata<any, any>;
     
     /**
+     * Path which should be used to create a relationship.
+     * 
+     * @type {string}
+     */
+    public readonly path: string;
+
+    /**
      * Constructor.
      * 
      * @param {JsonApiConnection} jsonApiConnection Connection to json api.
@@ -56,13 +64,15 @@ export class JsonApiToOneRelationshipProvider implements EntityProvider
      * @param {TypeMetadata<any>} typeMetadata Type metadata.
      * @param {Entity} entity Root entity.
      * @param {PropertyMetadata<any, any>} propertyMetadata Property metadata.
+     * @param {string} path Path which should be used to create a relationship.
      */
     public constructor(
         jsonApiConnection: JsonApiConnection, 
         jsonApiAdapter: JsonApiAdapter,
         typeMetadata: TypeMetadata<any>,
         entity: Entity,
-        propertyMetadata: PropertyMetadata<any, any>
+        propertyMetadata: PropertyMetadata<any, any>,
+        path: string = jsonApiRelationshipPath
     )
     {
         this.jsonApiConnection = jsonApiConnection;
@@ -70,6 +80,7 @@ export class JsonApiToOneRelationshipProvider implements EntityProvider
         this.typeMetadata = typeMetadata;
         this.entity = entity;
         this.propertyMetadata = propertyMetadata;
+        this.path = path;
 
         return;
     }
@@ -110,7 +121,7 @@ export class JsonApiToOneRelationshipProvider implements EntityProvider
         const typeMetadata = updateCommand.entityInfo.typeMetadata;
         const requestEntity = updateCommand.entity;
         const requestRelationshipObject = this.jsonApiAdapter.createEntityRelationshipObject(typeMetadata, requestEntity);
-        const linkObject = this.jsonApiAdapter.createRelationshipLinkObject(this.typeMetadata, this.entity, this.propertyMetadata);
+        const linkObject = this.jsonApiAdapter.createRelationshipLinkObject(this.typeMetadata, this.entity, this.propertyMetadata, this.path);
 
         await this.jsonApiConnection.patch(linkObject, requestRelationshipObject);
 
@@ -228,7 +239,7 @@ export class JsonApiToOneRelationshipProvider implements EntityProvider
     {
         const typeMetadata = batchRemoveCommand.entityInfo.typeMetadata;
         const requestRelationshipObject = this.jsonApiAdapter.createEntityRelationshipObject(typeMetadata, null);
-        const linkObject = this.jsonApiAdapter.createRelationshipLinkObject(this.typeMetadata, this.entity, this.propertyMetadata);
+        const linkObject = this.jsonApiAdapter.createRelationshipLinkObject(this.typeMetadata, this.entity, this.propertyMetadata, this.path);
 
         await this.jsonApiConnection.patch(linkObject, requestRelationshipObject);
 

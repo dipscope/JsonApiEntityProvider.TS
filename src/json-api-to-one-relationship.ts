@@ -1,5 +1,6 @@
 import { Entity, EntitySet, Nullable, PropertyInfo } from '@dipscope/entity-store';
 import { JsonApiEntityProvider } from './json-api-entity-provider';
+import { jsonApiRelationshipPath } from './json-api-relationship-path';
 import { JsonApiToOneRelationshipProvider } from './json-api-to-one-relationship-provider';
 
 /**
@@ -31,6 +32,13 @@ export class JsonApiToOneRelationship<TEntity extends Entity, TRelationship exte
     public readonly propertyInfo: PropertyInfo<TRelationship>;
     
     /**
+     * Path which should be used to create a relationship.
+     * 
+     * @type {string}
+     */
+    public readonly path: string;
+
+    /**
      * Relationship set.
      * 
      * @type {EntitySet<TRelationship>}
@@ -44,12 +52,14 @@ export class JsonApiToOneRelationship<TEntity extends Entity, TRelationship exte
      * @param {EntitySet<TEntity>} entitySet Entity set.
      * @param {TEntity} entity Entity for which relationship is created.
      * @param {PropertyInfo<TRelationship>} propertyInfo Property info of relationship.
+     * @param {string} path Path which should be used to create a relationship.
      */
     public constructor(
         jsonApiEntityProvider: JsonApiEntityProvider, 
         entitySet: EntitySet<TEntity>, 
         entity: TEntity,
-        propertyInfo: PropertyInfo<TRelationship>
+        propertyInfo: PropertyInfo<TRelationship>,
+        path: string = jsonApiRelationshipPath
     )
     {
         const jsonApiToOneRelationshipProvider = new JsonApiToOneRelationshipProvider(
@@ -57,12 +67,14 @@ export class JsonApiToOneRelationship<TEntity extends Entity, TRelationship exte
             jsonApiEntityProvider.jsonApiAdapter,
             entitySet.typeMetadata,
             entity,
-            propertyInfo.propertyMetadata
+            propertyInfo.propertyMetadata,
+            path
         );
 
         this.entitySet = entitySet;
         this.entity = entity;
         this.propertyInfo = propertyInfo;
+        this.path = path;
         this.relationshipSet = new EntitySet(propertyInfo.typeMetadata, jsonApiToOneRelationshipProvider);
 
         return;

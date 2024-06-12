@@ -1,4 +1,4 @@
-import { isArray, isEmpty, isNil, isNull, isString, isUndefined, toNumber, toString } from 'lodash';
+import { isArray, isEmpty, isNil, isNull, isString, isUndefined, toNumber, toString, trim } from 'lodash';
 import { BrowseCommand, Entity, EntityCollection, Nullable, QueryCommand } from '@dipscope/entity-store';
 import { PropertyMetadata, TypeMetadata } from '@dipscope/type-manager';
 import { JsonApiConnection } from './json-api-connection';
@@ -7,6 +7,7 @@ import { JsonApiIncludeExpressionVisitor } from './json-api-include-expression-v
 import { JsonApiMetadataExtractor } from './json-api-metadata-extractor';
 import { JsonApiPaginateExpressionVisitor } from './json-api-paginate-expression-visitor';
 import { JsonApiPaginatedEntityCollection } from './json-api-paginated-entity-collection';
+import { jsonApiRelationshipPath } from './json-api-relationship-path';
 import { jsonApiResourceId } from './json-api-resource-id';
 import { JsonApiResourceMetadata } from './json-api-resource-metadata';
 import { JsonApiResourceMetadataNotFoundError } from './json-api-resource-metadata-not-found-error';
@@ -209,18 +210,20 @@ export class JsonApiAdapter
      * @param {TypeMetadata<TEntity>} typeMetadata Type metadata.
      * @param {TEntity|string} entityOrIdentifier Entity or identifier.
      * @param {PropertyMetadata<TEntity, TRelationship>} propertyMetadata Property metadata.
+     * @param {string} path Path which should be used to create a relationship.
      * 
      * @returns {LinkObject} Link object.
      */
     public createRelationshipLinkObject<TEntity extends Entity, TRelationship extends Entity>(
         typeMetadata: TypeMetadata<TEntity>, 
         entityOrIdentifier: TEntity | string, 
-        propertyMetadata: PropertyMetadata<TEntity, TRelationship>
+        propertyMetadata: PropertyMetadata<TEntity, TRelationship>,
+        path: string = jsonApiRelationshipPath
     ): LinkObject
     {
         const resourceIdentifierLinkObject = this.createResourceIdentifierLinkObject(typeMetadata, entityOrIdentifier);
         const relationship = propertyMetadata.serializedPropertyName;
-        const linkObject = `${resourceIdentifierLinkObject}/relationships/${relationship}`;
+        const linkObject = `${resourceIdentifierLinkObject}/${trim(path)}/${relationship}`;
         
         return linkObject;
     }
@@ -253,6 +256,7 @@ export class JsonApiAdapter
      * @param {TEntity|string} entityOrIdentifier Entity or identifier.
      * @param {PropertyMetadata<TEntity, TRelationship>} propertyMetadata Property metadata.
      * @param {QueryCommand<TEntity>} queryCommand Query command.
+     * @param {string} path Path which should be used to create a relationship.
      * 
      * @returns {LinkObject} Link object.
      */
@@ -260,10 +264,11 @@ export class JsonApiAdapter
         typeMetadata: TypeMetadata<TEntity>, 
         entityOrIdentifier: TEntity | string, 
         propertyMetadata: PropertyMetadata<TEntity, TRelationship>, 
-        queryCommand: QueryCommand<TEntity>
+        queryCommand: QueryCommand<TEntity>,
+        path: string = jsonApiRelationshipPath
     ): LinkObject
     {
-        const relationshipLinkObject = this.createRelationshipLinkObject(typeMetadata, entityOrIdentifier, propertyMetadata);
+        const relationshipLinkObject = this.createRelationshipLinkObject(typeMetadata, entityOrIdentifier, propertyMetadata, path);
         const linkObject = this.createQueryLinkObject(relationshipLinkObject, queryCommand);
 
         return linkObject;
