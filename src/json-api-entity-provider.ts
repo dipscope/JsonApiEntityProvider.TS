@@ -11,6 +11,7 @@ import { JsonApiFilterExpressionVisitor } from './json-api-filter-expression-vis
 import { JsonApiIncludeExpressionVisitor } from './json-api-include-expression-visitor';
 import { JsonApiMetadataExtractor } from './json-api-metadata-extractor';
 import { JsonApiPaginateExpressionVisitor } from './json-api-paginate-expression-visitor';
+import { jsonApiRelationshipPath } from './json-api-relationship-path';
 import { JsonApiSortExpressionVisitor } from './json-api-sort-expression-visitor';
 import { JsonApiToManyRelationship } from './json-api-to-many-relationship';
 import { JsonApiToOneRelationship } from './json-api-to-one-relationship';
@@ -357,12 +358,12 @@ export class JsonApiEntityProvider implements EntityProvider
      * 
      * @returns {JsonApiToManyRelationship<TEntity, TRelationship>} Json api to many relationship for provided entity.
      */
-    public createJsonApiToOneRelationship<TEntity extends Entity, TRelationship extends Entity>(entitySet: EntitySet<TEntity>, entity: TEntity, includeClause: IncludeClause<TEntity, TRelationship>): JsonApiToOneRelationship<TEntity, TRelationship>
+    public createJsonApiToOneRelationship<TEntity extends Entity, TRelationship extends Entity>(entitySet: EntitySet<TEntity>, entity: TEntity, includeClause: IncludeClause<TEntity, TRelationship>, path: string = jsonApiRelationshipPath): JsonApiToOneRelationship<TEntity, TRelationship>
     {
         const browseCommand = entitySet.include(includeClause).build();
         const includeExpression = browseCommand.includeExpression!;
         const propertyInfo = includeExpression.propertyInfo;
         
-        return new JsonApiToOneRelationship<TEntity, TRelationship>(this, entitySet, entity, propertyInfo);
+        return new JsonApiToOneRelationship<TEntity, TRelationship>(this, entitySet, entity, propertyInfo, path);
     }
 }
