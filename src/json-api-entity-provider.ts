@@ -15,6 +15,7 @@ import { jsonApiRelationshipPath } from './json-api-relationship-path';
 import { JsonApiSortExpressionVisitor } from './json-api-sort-expression-visitor';
 import { JsonApiToManyRelationship } from './json-api-to-many-relationship';
 import { JsonApiToOneRelationship } from './json-api-to-one-relationship';
+import fetch from 'cross-fetch';
 
 /**
  * Json api implementation of entity provider.
@@ -46,8 +47,10 @@ export class JsonApiEntityProvider implements EntityProvider
     {
         const defaultJsonApiRequestInterceptor = (request: Request) => request;
         const defaultJsonApiResponseInterceptor = (response: Response) => response;
+        const defaultJsonApiFetchInterceptor = fetch;
         const jsonApiRequestInterceptor = jsonApiEntityProviderOptions.jsonApiRequestInterceptor ?? defaultJsonApiRequestInterceptor;
         const jsonApiResponseInterceptor = jsonApiEntityProviderOptions.jsonApiResponseInterceptor ?? defaultJsonApiResponseInterceptor;
+        const jsonApiFetchInterceptor = jsonApiEntityProviderOptions.jsonApiFetchInterceptor ?? defaultJsonApiFetchInterceptor;
         const allowToManyRelationshipReplacement = jsonApiEntityProviderOptions.allowToManyRelationshipReplacement ?? false;
         const jsonApiMetadataExtractor = jsonApiEntityProviderOptions.jsonApiMetadataExtractor ?? new JsonApiMetadataExtractor();
         const jsonApiFilterExpressionVisitor = jsonApiEntityProviderOptions.jsonApiFilterExpressionVisitor ?? new JsonApiFilterExpressionVisitor();
@@ -55,7 +58,7 @@ export class JsonApiEntityProvider implements EntityProvider
         const jsonApiSortExpressionVisitor = new JsonApiSortExpressionVisitor();
         const jsonApiIncludeExpressionVisitor = new JsonApiIncludeExpressionVisitor();
         
-        this.jsonApiConnection = new JsonApiConnection(jsonApiEntityProviderOptions.baseUrl, jsonApiRequestInterceptor, jsonApiResponseInterceptor);
+        this.jsonApiConnection = new JsonApiConnection(jsonApiEntityProviderOptions.baseUrl, jsonApiRequestInterceptor, jsonApiFetchInterceptor, jsonApiResponseInterceptor);
         this.jsonApiAdapter = new JsonApiAdapter(this.jsonApiConnection, jsonApiMetadataExtractor, jsonApiFilterExpressionVisitor, jsonApiPaginateExpressionVisitor, jsonApiSortExpressionVisitor, jsonApiIncludeExpressionVisitor, allowToManyRelationshipReplacement);
 
         return;

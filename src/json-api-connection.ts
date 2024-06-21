@@ -8,6 +8,7 @@ import { JsonApiRequestInterceptor } from './json-api-request-interceptor';
 import { JsonApiResponseInterceptor } from './json-api-response-interceptor';
 import { DocumentObject } from './types/document-object';
 import { LinkObject } from './types/link-object';
+import { JsonApiFetchInterceptor } from './json-api-fetch-interceptor';
 
 /**
  * Represents a connection to json api.
@@ -29,6 +30,13 @@ export class JsonApiConnection
      * @type {JsonApiRequestInterceptor}
      */
     public readonly jsonApiRequestInterceptor: JsonApiRequestInterceptor;
+    
+    /**
+     * Json api fetch interceptor for adding additional behaviours.
+     * 
+     * @type {JsonApiFetchInterceptor}
+     */
+    public readonly jsonApiFetchInterceptor: JsonApiFetchInterceptor;
 
     /**
      * Json api response interceptor for adding additional behaviours.
@@ -54,11 +62,13 @@ export class JsonApiConnection
     public constructor(
         baseUrl: string, 
         jsonApiRequestInterceptor: JsonApiRequestInterceptor, 
+        jsonApiFetchInterceptor: JsonApiFetchInterceptor,
         jsonApiResponseInterceptor: JsonApiResponseInterceptor
     )
     {
         this.baseUrl = baseUrl.replace(new RegExp('\\/+$', 'g'), '');
         this.jsonApiRequestInterceptor = jsonApiRequestInterceptor;
+        this.jsonApiFetchInterceptor = jsonApiFetchInterceptor;
         this.jsonApiResponseInterceptor = jsonApiResponseInterceptor;
         this.headers = this.buildHeaders();
 
@@ -93,7 +103,7 @@ export class JsonApiConnection
         const headers = new Headers(this.headers);
         const request = new Request(href, { headers: headers, credentials: 'same-origin', method: 'GET' });
         const interceptedRequest = this.jsonApiRequestInterceptor(request);
-        const response = await fetch(interceptedRequest);
+        const response = await this.jsonApiFetchInterceptor(interceptedRequest);
         const interceptedResponse = this.jsonApiResponseInterceptor(response);
         const responseDocumentObject = await this.extractDocumentObject(interceptedResponse);
 
