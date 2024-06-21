@@ -1,3 +1,4 @@
+import { JsonApiFetchInterceptor } from './json-api-fetch-interceptor';
 import { JsonApiFilterExpressionVisitor } from './json-api-filter-expression-visitor';
 import { JsonApiMetadataExtractor } from './json-api-metadata-extractor';
 import { JsonApiPaginateExpressionVisitor } from './json-api-paginate-expression-visitor';
@@ -24,6 +25,13 @@ export interface JsonApiEntityProviderOptions
      * @type {JsonApiRequestInterceptor}
      */
     jsonApiRequestInterceptor?: JsonApiRequestInterceptor;
+
+    /**
+     * Json api fetch interceptor if any.
+     * 
+     * @type {JsonApiFetchInterceptor}
+     */
+    jsonApiFetchInterceptor?: JsonApiFetchInterceptor;
 
     /**
      * Json api response interceptor if any.
