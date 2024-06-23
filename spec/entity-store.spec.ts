@@ -1,6 +1,7 @@
 import { EntityCollection, EntitySet, EntityStore } from '@dipscope/entity-store';
 import { Inject, Property, Type, TypeConfiguration, TypeManager, TypeMetadata } from '@dipscope/type-manager';
 import { JsonApiEntityProvider, JsonApiNetFilterExpressionVisitor, JsonApiNetMetadataExtractor, JsonApiNetPaginateExpressionVisitor, JsonApiResource, JsonApiResourceMetadata } from '../src';
+import fetch from 'cross-fetch';
 
 @Type()
 export class JsonApiEntity
@@ -212,17 +213,19 @@ export class SpecEntityStore extends EntityStore
     public readonly humanSet: EntitySet<Human>;
     public readonly manSet: EntitySet<Man>;
     public readonly womanSet: EntitySet<Woman>;
+    private readonly mock: 'passthrough'|'replace-custom'|'error';
 
-    public constructor()
+    public constructor(mock: 'passthrough'|'replace-custom'|'error' = 'passthrough')
     {
         super(new JsonApiEntityProvider({
             baseUrl: 'http://localhost:20001',
             jsonApiFilterExpressionVisitor: new JsonApiNetFilterExpressionVisitor(),
             jsonApiPaginateExpressionVisitor: new JsonApiNetPaginateExpressionVisitor(),
             jsonApiMetadataExtractor: new JsonApiNetMetadataExtractor(),
-            allowToManyRelationshipReplacement: true
+            allowToManyRelationshipReplacement: true,
+            jsonApiFetchInterceptor: (request) => this.psuedoFetch(request)
         }));
-
+        this.mock = mock;
         this.userStatusSet = this.createEntitySet(UserStatus);
         this.companySet = this.createEntitySet(Company);
         this.messageSet = this.createEntitySet(Message);
@@ -237,6 +240,30 @@ export class SpecEntityStore extends EntityStore
     public get jsonApiEntityProvider(): JsonApiEntityProvider
     {
         return this.entityProvider as JsonApiEntityProvider;
+    }
+
+    private psuedoFetch(request: Request): Promise<Response>
+    {
+        switch(this.mock)
+        {
+            case 'error':
+                throw new Error('Fetch Request Intercepted');
+            case 'replace-custom':
+                if(request.url.indexOf('custom-action') > 0)
+                {
+                    return fetch(new Request(
+                        request.url.replace('custom-action', 'relationships'),
+                        request,
+                    ));
+                }
+                else
+                {
+                    return fetch(request);
+                }
+            default:
+            case 'passthrough':
+                return fetch(request);
+        }
     }
 }
 
