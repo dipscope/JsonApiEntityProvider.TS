@@ -133,7 +133,7 @@ export class JsonApiConnection
         const headers = new Headers(this.headers);
         const request = new Request(href, { headers: headers, credentials: 'same-origin', method: 'POST', body: body });
         const interceptedRequest = this.jsonApiRequestInterceptor(request);
-        const response = await fetch(interceptedRequest);
+        const response = await this.jsonApiFetchInterceptor(interceptedRequest);
         const interceptedResponse = this.jsonApiResponseInterceptor(response);
         const responseDocumentObject = await this.extractDocumentObject(interceptedResponse);
 
@@ -170,7 +170,7 @@ export class JsonApiConnection
         const headers = new Headers(this.headers);
         const request = new Request(href, { headers: headers, credentials: 'same-origin', method: 'PATCH', body: body });
         const interceptedRequest = this.jsonApiRequestInterceptor(request);
-        const response = await fetch(interceptedRequest);
+        const response = await this.jsonApiFetchInterceptor(interceptedRequest);
         const interceptedResponse = this.jsonApiResponseInterceptor(response);
         const responseDocumentObject = await this.extractDocumentObject(interceptedResponse);
 
@@ -207,7 +207,7 @@ export class JsonApiConnection
         const headers = new Headers(this.headers);
         const request = new Request(href, { headers: headers, credentials: 'same-origin', method: 'DELETE', body: body });
         const interceptedRequest = this.jsonApiRequestInterceptor(request);
-        const response = await fetch(interceptedRequest);
+        const response = await this.jsonApiFetchInterceptor(interceptedRequest);
         const interceptedResponse = this.jsonApiResponseInterceptor(response);
         const responseDocumentObject = await this.extractDocumentObject(interceptedResponse);
 
