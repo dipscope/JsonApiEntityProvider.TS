@@ -2,6 +2,14 @@ import { generateRandomString, Man, Message, SpecEntityStore, User, UserStatus, 
 
 describe('Json api entity provider', () =>
 {
+    it('should allow for fetch interceptors', async () =>
+    {
+        const specEntityStore = new SpecEntityStore('error');
+        const userSet = specEntityStore.userSet;
+        const name = generateRandomString();
+        const user = new User(name, 1);
+        await expectAsync(userSet.add(user)).toBeRejectedWithError('Fetch Request Intercepted');
+    });
     it('should add new entities', async () =>
     {
         const specEntityStore = new SpecEntityStore();
