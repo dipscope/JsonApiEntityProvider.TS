@@ -16,7 +16,7 @@ async function addUser(userSet: EntitySet<User>, name?: string)
 async function setupRelationshipTest() 
 {
     // Get Entity Store Objects.
-    const specEntityStore = new SpecEntityStore();
+    const specEntityStore = new SpecEntityStore('passthrough');
     const userSet = specEntityStore.userSet;
     const companySet = specEntityStore.companySet;
     const jsonApiEntityProvider = specEntityStore.jsonApiEntityProvider;
@@ -27,8 +27,9 @@ async function setupRelationshipTest()
 
     // Create 3 initial Messages.
     const userCompany = jsonApiEntityProvider.createJsonApiToOneRelationship(userSet, user, u => u.company);
+    const userCompanyCustom = jsonApiEntityProvider.createJsonApiToOneRelationship(userSet, user, u => u.company, 'custom-action');
 
-    return { specEntityStore, company, userSet, companySet, jsonApiEntityProvider, user, userCompany };
+    return { specEntityStore, company, userSet, companySet, jsonApiEntityProvider, user, userCompany, userCompanyCustom };
 }
 
 function createCompany(text?: string) 
@@ -56,6 +57,26 @@ describe('Json api to many relationship provider', () =>
         // ! Function Under Test !
         // Let's check that the message was linked correctly.
         const data = await userCompany.find();
+
+        expect(data).toEqual(company);
+    });
+    it('should fetch existing entity from a custom path', async () =>
+    {
+        const { userSet, company, userCompanyCustom, user } = await setupRelationshipTest();
+
+        expect(user.company).toBeUndefined();
+
+        // We have some continued setup, we need to assign a company to the user.
+        user.company = company;
+
+        const initialUser = await userSet.update(user);
+
+        expect(initialUser.company).toBeDefined();
+
+        // ! Function Under Test !
+        // Let's check that the message was linked correctly.
+        // SHOULD NOT PASS with injector set to passthrough.
+        const data = await userCompanyCustom.find();
 
         expect(data).toEqual(company);
     });
