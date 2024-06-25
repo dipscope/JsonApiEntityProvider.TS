@@ -173,7 +173,14 @@ export class JsonApiToManyRelationshipProvider implements EntityProvider
      */
     public async executeSaveCommand<TEntity extends Entity>(saveCommand: SaveCommand<TEntity>): Promise<TEntity>
     {
-        throw new CommandNotSupportedError(saveCommand, this);
+        const typeMetadata = saveCommand.entityInfo.typeMetadata;
+        const requestEntity = saveCommand.entity;
+        const requestRelationshipObject = this.jsonApiAdapter.createEntityDocumentObject(typeMetadata, requestEntity);
+        const linkObject = this.jsonApiAdapter.createRelationshipLinkObject(this.typeMetadata, this.entity, this.propertyMetadata, "");
+
+        await this.jsonApiConnection.post(linkObject, requestRelationshipObject);
+
+        return requestEntity;
     }
 
     /**
@@ -185,7 +192,14 @@ export class JsonApiToManyRelationshipProvider implements EntityProvider
      */
     public async executeBulkSaveCommand<TEntity extends Entity>(bulkSaveCommand: BulkSaveCommand<TEntity>): Promise<EntityCollection<TEntity>>
     {
-        throw new CommandNotSupportedError(bulkSaveCommand, this);
+        const typeMetadata = bulkSaveCommand.entityInfo.typeMetadata;
+        const requestEntityCollection = bulkSaveCommand.entityCollection;
+        const requestDocumentCollection = requestEntityCollection.map(el => this.jsonApiAdapter.createEntityDocumentObject(typeMetadata, el))
+        const linkObject = this.jsonApiAdapter.createRelationshipLinkObject(this.typeMetadata, this.entity, this.propertyMetadata, "");
+
+        await Promise.all(requestDocumentCollection.map(el => this.jsonApiConnection.post(linkObject, el)));
+
+        return requestEntityCollection;
     }
 
     /**
