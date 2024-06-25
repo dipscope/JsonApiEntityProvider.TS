@@ -198,6 +198,7 @@ The To-Many relationship provider enables operations on to-many relationships. T
 4. Adding an element to the related data.
 5. Updating related data by pointing relationship to a different model.
 6. Removing an element from the related data.
+7. Saving non-root entities directly under their parent.
 
 ```typescript
 const userMessages = jsonApiEntityProvider.createJsonApiToManyRelationship(userSet, user, u => u.messages);
@@ -229,6 +230,10 @@ await userMessages.bulkUpdate(addedMessages);
 // Removing To-Many relationship data.
 await userMessages.remove(addedMessage);
 await userMessages.bulkRemove(toRemoveMessages);
+
+// Saving non-root element(s) directly to their related parent.
+await userMessages.save(newMessage);
+await userMessages.bulkSave(newMessages);
 ```
 
 ## Versioning
