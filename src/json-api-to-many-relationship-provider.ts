@@ -5,6 +5,8 @@ import { BulkUpdateCommand, QueryCommand, RemoveCommand, SaveCommand, UpdateComm
 import { PropertyMetadata, TypeMetadata } from '@dipscope/type-manager';
 import { JsonApiAdapter } from './json-api-adapter';
 import { JsonApiConnection } from './json-api-connection';
+import { jsonApiRelationshipPath } from './json-api-relationship-path';
+import { jsonApiResourcePath } from './json-api-resource-path';
 
 /**
  * Json api to many relationship provider.
@@ -49,6 +51,13 @@ export class JsonApiToManyRelationshipProvider implements EntityProvider
     public readonly propertyMetadata: PropertyMetadata<any, any>;
     
     /**
+     * Path which should be used to create a relationship.
+     * 
+     * @type {string}
+     */
+    public readonly path: string;
+
+    /**
      * Constructor.
      * 
      * @param {JsonApiConnection} jsonApiConnection Connection to json api.
@@ -56,13 +65,15 @@ export class JsonApiToManyRelationshipProvider implements EntityProvider
      * @param {TypeMetadata<any>} typeMetadata Type metadata.
      * @param {Entity} entity Root entity.
      * @param {PropertyMetadata<any, any>} propertyMetadata Property metadata.
+     * @param {string} path Path which should be used to create a relationship.
      */
     public constructor(
         jsonApiConnection: JsonApiConnection, 
         jsonApiAdapter: JsonApiAdapter,
         typeMetadata: TypeMetadata<any>,
         entity: Entity,
-        propertyMetadata: PropertyMetadata<any, any>
+        propertyMetadata: PropertyMetadata<any, any>,
+        path: string = jsonApiRelationshipPath
     )
     {
         this.jsonApiConnection = jsonApiConnection;
@@ -70,6 +81,7 @@ export class JsonApiToManyRelationshipProvider implements EntityProvider
         this.typeMetadata = typeMetadata;
         this.entity = entity;
         this.propertyMetadata = propertyMetadata;
+        this.path = path;
 
         return;
     }
@@ -87,7 +99,7 @@ export class JsonApiToManyRelationshipProvider implements EntityProvider
         const requestEntity = addCommand.entity;
         const requestEntityCollection = new EntityCollection<TEntity>([requestEntity]);
         const requestRelationshipObject = this.jsonApiAdapter.createEntityCollectionRelationshipObject(typeMetadata, requestEntityCollection);
-        const linkObject = this.jsonApiAdapter.createRelationshipLinkObject(this.typeMetadata, this.entity, this.propertyMetadata);
+        const linkObject = this.jsonApiAdapter.createRelationshipLinkObject(this.typeMetadata, this.entity, this.propertyMetadata, this.path);
 
         await this.jsonApiConnection.post(linkObject, requestRelationshipObject);
 
@@ -106,7 +118,7 @@ export class JsonApiToManyRelationshipProvider implements EntityProvider
         const typeMetadata = bulkAddCommand.entityInfo.typeMetadata;
         const requestEntityCollection = bulkAddCommand.entityCollection;
         const requestRelationshipObject = this.jsonApiAdapter.createEntityCollectionRelationshipObject(typeMetadata, requestEntityCollection);
-        const linkObject = this.jsonApiAdapter.createRelationshipLinkObject(this.typeMetadata, this.entity, this.propertyMetadata);
+        const linkObject = this.jsonApiAdapter.createRelationshipLinkObject(this.typeMetadata, this.entity, this.propertyMetadata, this.path);
 
         await this.jsonApiConnection.post(linkObject, requestRelationshipObject);
 
@@ -126,7 +138,7 @@ export class JsonApiToManyRelationshipProvider implements EntityProvider
         const requestEntity = updateCommand.entity;
         const requestEntityCollection = new EntityCollection<TEntity>([requestEntity]);
         const requestRelationshipObject = this.jsonApiAdapter.createEntityCollectionRelationshipObject(typeMetadata, requestEntityCollection);
-        const linkObject = this.jsonApiAdapter.createRelationshipLinkObject(this.typeMetadata, this.entity, this.propertyMetadata);
+        const linkObject = this.jsonApiAdapter.createRelationshipLinkObject(this.typeMetadata, this.entity, this.propertyMetadata, this.path);
 
         await this.jsonApiConnection.patch(linkObject, requestRelationshipObject);
 
@@ -145,7 +157,7 @@ export class JsonApiToManyRelationshipProvider implements EntityProvider
         const typeMetadata = bulkUpdateCommand.entityInfo.typeMetadata;
         const requestEntityCollection = bulkUpdateCommand.entityCollection;
         const requestRelationshipObject = this.jsonApiAdapter.createEntityCollectionRelationshipObject(typeMetadata, requestEntityCollection);
-        const linkObject = this.jsonApiAdapter.createRelationshipLinkObject(this.typeMetadata, this.entity, this.propertyMetadata);
+        const linkObject = this.jsonApiAdapter.createRelationshipLinkObject(this.typeMetadata, this.entity, this.propertyMetadata, this.path);
 
         await this.jsonApiConnection.patch(linkObject, requestRelationshipObject);
 
@@ -175,10 +187,10 @@ export class JsonApiToManyRelationshipProvider implements EntityProvider
     {
         const typeMetadata = saveCommand.entityInfo.typeMetadata;
         const requestEntity = saveCommand.entity;
-        const requestRelationshipObject = this.jsonApiAdapter.createEntityDocumentObject(typeMetadata, requestEntity);
-        const linkObject = this.jsonApiAdapter.createRelationshipLinkObject(this.typeMetadata, this.entity, this.propertyMetadata, "");
+        const requestDocumentObject = this.jsonApiAdapter.createEntityDocumentObject(typeMetadata, requestEntity);
+        const linkObject = this.jsonApiAdapter.createRelationshipLinkObject(this.typeMetadata, this.entity, this.propertyMetadata, jsonApiResourcePath);
 
-        await this.jsonApiConnection.post(linkObject, requestRelationshipObject);
+        await this.jsonApiConnection.post(linkObject, requestDocumentObject);
 
         return requestEntity;
     }
@@ -192,12 +204,19 @@ export class JsonApiToManyRelationshipProvider implements EntityProvider
      */
     public async executeBulkSaveCommand<TEntity extends Entity>(bulkSaveCommand: BulkSaveCommand<TEntity>): Promise<EntityCollection<TEntity>>
     {
-        const typeMetadata = bulkSaveCommand.entityInfo.typeMetadata;
+        const entityInfo = bulkSaveCommand.entityInfo;
         const requestEntityCollection = bulkSaveCommand.entityCollection;
-        const requestDocumentCollection = requestEntityCollection.map(el => this.jsonApiAdapter.createEntityDocumentObject(typeMetadata, el))
-        const linkObject = this.jsonApiAdapter.createRelationshipLinkObject(this.typeMetadata, this.entity, this.propertyMetadata, "");
+        const responseEntityPromises = new Array<Promise<TEntity>>();
 
-        await Promise.all(requestDocumentCollection.map(el => this.jsonApiConnection.post(linkObject, el)));
+        for (const requestEntity of requestEntityCollection) 
+        {
+            const saveCommand = new SaveCommand<TEntity>(entityInfo, requestEntity);
+            const responseEntityPromise = this.executeSaveCommand(saveCommand);
+
+            responseEntityPromises.push(responseEntityPromise);
+        }
+
+        await Promise.all(responseEntityPromises);
 
         return requestEntityCollection;
     }
@@ -244,7 +263,7 @@ export class JsonApiToManyRelationshipProvider implements EntityProvider
         const requestEntity = removeCommand.entity;
         const requestEntityCollection = new EntityCollection<TEntity>([requestEntity]);
         const requestRelationshipObject = this.jsonApiAdapter.createEntityCollectionRelationshipObject(typeMetadata, requestEntityCollection);
-        const linkObject = this.jsonApiAdapter.createRelationshipLinkObject(this.typeMetadata, this.entity, this.propertyMetadata);
+        const linkObject = this.jsonApiAdapter.createRelationshipLinkObject(this.typeMetadata, this.entity, this.propertyMetadata, this.path);
 
         await this.jsonApiConnection.delete(linkObject, requestRelationshipObject);
 
@@ -263,7 +282,7 @@ export class JsonApiToManyRelationshipProvider implements EntityProvider
         const typeMetadata = bulkRemoveCommand.entityInfo.typeMetadata;
         const requestEntityCollection = bulkRemoveCommand.entityCollection;
         const requestRelationshipObject = this.jsonApiAdapter.createEntityCollectionRelationshipObject(typeMetadata, requestEntityCollection);
-        const linkObject = this.jsonApiAdapter.createRelationshipLinkObject(this.typeMetadata, this.entity, this.propertyMetadata);
+        const linkObject = this.jsonApiAdapter.createRelationshipLinkObject(this.typeMetadata, this.entity, this.propertyMetadata, this.path);
 
         await this.jsonApiConnection.delete(linkObject, requestRelationshipObject);
 

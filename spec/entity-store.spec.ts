@@ -1,7 +1,7 @@
+import fetch from 'cross-fetch';
 import { EntityCollection, EntitySet, EntityStore } from '@dipscope/entity-store';
 import { Inject, Property, Type, TypeConfiguration, TypeManager, TypeMetadata } from '@dipscope/type-manager';
 import { JsonApiEntityProvider, JsonApiNetFilterExpressionVisitor, JsonApiNetMetadataExtractor, JsonApiNetPaginateExpressionVisitor, JsonApiResource, JsonApiResourceMetadata } from '../src';
-import fetch from 'cross-fetch';
 
 @Type()
 export class JsonApiEntity
@@ -213,9 +213,9 @@ export class SpecEntityStore extends EntityStore
     public readonly humanSet: EntitySet<Human>;
     public readonly manSet: EntitySet<Man>;
     public readonly womanSet: EntitySet<Woman>;
-    private readonly mock: 'passthrough'|'replace-custom'|'error';
+    public readonly mock: 'passthrough' | 'replace-custom' | 'error';
 
-    public constructor(mock: 'passthrough'|'replace-custom'|'error' = 'passthrough')
+    public constructor(mock: 'passthrough' | 'replace-custom' | 'error' = 'passthrough')
     {
         super(new JsonApiEntityProvider({
             baseUrl: 'http://localhost:20001',
@@ -225,6 +225,7 @@ export class SpecEntityStore extends EntityStore
             allowToManyRelationshipReplacement: true,
             jsonApiFetchInterceptor: (request) => this.psuedoFetch(request)
         }));
+        
         this.mock = mock;
         this.userStatusSet = this.createEntitySet(UserStatus);
         this.companySet = this.createEntitySet(Company);

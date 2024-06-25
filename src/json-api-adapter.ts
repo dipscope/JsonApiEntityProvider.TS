@@ -11,6 +11,7 @@ import { jsonApiRelationshipPath } from './json-api-relationship-path';
 import { jsonApiResourceId } from './json-api-resource-id';
 import { JsonApiResourceMetadata } from './json-api-resource-metadata';
 import { JsonApiResourceMetadataNotFoundError } from './json-api-resource-metadata-not-found-error';
+import { jsonApiResourcePath } from './json-api-resource-path';
 import { jsonApiResourceType } from './json-api-resource-type';
 import { JsonApiSortExpressionVisitor } from './json-api-sort-expression-visitor';
 import { AttributesObject } from './types/attributes-object';
@@ -223,8 +224,10 @@ export class JsonApiAdapter
     {
         const resourceIdentifierLinkObject = this.createResourceIdentifierLinkObject(typeMetadata, entityOrIdentifier);
         const relationship = propertyMetadata.serializedPropertyName;
-        const linkObject = `${resourceIdentifierLinkObject}/${trim(path)}/${relationship}`;
-        
+        const relationshipPath = trim(path);
+        const relationshipLinkObject = relationshipPath === jsonApiResourcePath ? relationship : `${relationshipPath}/${relationship}`;
+        const linkObject = `${resourceIdentifierLinkObject}/${relationshipLinkObject}`;
+
         return linkObject;
     }
 
@@ -341,6 +344,7 @@ export class JsonApiAdapter
         const relationship = propertyMetadata.serializedPropertyName;
         const relationshipLinkObject = `${resourceIdentifierLinkObject}/${relationship}`;
         const linkObject = this.createBrowseLinkObject(relationshipLinkObject, browseCommand);
+        
         return linkObject;
     }
 

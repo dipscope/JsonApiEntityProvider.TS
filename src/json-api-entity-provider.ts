@@ -1,3 +1,4 @@
+import fetch from 'cross-fetch';
 import { first, isNil, merge, toString } from 'lodash';
 import { AddCommand, BatchRemoveCommand, BatchUpdateCommand, CommandNotSupportedError, EntitySet } from '@dipscope/entity-store';
 import { IncludeClause, IncludeCollectionClause, PaginatedEntityCollection } from '@dipscope/entity-store';
@@ -15,7 +16,6 @@ import { jsonApiRelationshipPath } from './json-api-relationship-path';
 import { JsonApiSortExpressionVisitor } from './json-api-sort-expression-visitor';
 import { JsonApiToManyRelationship } from './json-api-to-many-relationship';
 import { JsonApiToOneRelationship } from './json-api-to-one-relationship';
-import fetch from 'cross-fetch';
 
 /**
  * Json api implementation of entity provider.
@@ -340,16 +340,17 @@ export class JsonApiEntityProvider implements EntityProvider
      * @param {EntitySet<TEntity>} entitySet Entity set.
      * @param {TEntity} entity Entity.
      * @param {IncludeCollectionClause<TEntity, TRelationship>} includeCollectionClause Include collection clause.
+     * @param {string} path Path which should be used to create a relationship.
      * 
      * @returns {JsonApiToManyRelationship<TEntity, TRelationship>} Json api to many relationship for provided entity.
      */
-    public createJsonApiToManyRelationship<TEntity extends Entity, TRelationship extends Entity>(entitySet: EntitySet<TEntity>, entity: TEntity, includeCollectionClause: IncludeCollectionClause<TEntity, TRelationship>): JsonApiToManyRelationship<TEntity, TRelationship>
+    public createJsonApiToManyRelationship<TEntity extends Entity, TRelationship extends Entity>(entitySet: EntitySet<TEntity>, entity: TEntity, includeCollectionClause: IncludeCollectionClause<TEntity, TRelationship>, path: string = jsonApiRelationshipPath): JsonApiToManyRelationship<TEntity, TRelationship>
     {
         const browseCommand = entitySet.includeCollection(includeCollectionClause).build();
         const includeExpression = browseCommand.includeExpression!;
         const propertyInfo = includeExpression.propertyInfo;
 
-        return new JsonApiToManyRelationship<TEntity, TRelationship>(this, entitySet, entity, propertyInfo);
+        return new JsonApiToManyRelationship<TEntity, TRelationship>(this, entitySet, entity, propertyInfo, path);
     }
 
     /**
@@ -358,6 +359,7 @@ export class JsonApiEntityProvider implements EntityProvider
      * @param {EntitySet<TEntity>} entitySet Entity set.
      * @param {TEntity} entity Entity.
      * @param {IncludeClause<TEntity, TRelationship>} includeClause Include clause.
+     * @param {string} path Path which should be used to create a relationship.
      * 
      * @returns {JsonApiToManyRelationship<TEntity, TRelationship>} Json api to many relationship for provided entity.
      */

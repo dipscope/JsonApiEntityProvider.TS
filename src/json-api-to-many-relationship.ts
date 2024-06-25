@@ -5,6 +5,7 @@ import { IncludeClause, IncludeCollectionClause, PaginatedEntityCollection, Prop
 import { RootBrowseCommandBuilder, SortBrowseCommandBuilder, SortClause } from '@dipscope/entity-store';
 import { TypeMetadata } from '@dipscope/type-manager';
 import { JsonApiEntityProvider } from './json-api-entity-provider';
+import { jsonApiRelationshipPath } from './json-api-relationship-path';
 import { JsonApiToManyRelationshipProvider } from './json-api-to-many-relationship-provider';
 
 /**
@@ -36,6 +37,13 @@ export class JsonApiToManyRelationship<TEntity extends Entity, TRelationship ext
     public readonly propertyInfo: PropertyInfo<EntityCollection<TRelationship>>;
 
     /**
+     * Path which should be used to create a relationship.
+     * 
+     * @type {string}
+     */
+    public readonly path: string;
+
+    /**
      * Relationship set.
      * 
      * @type {EntitySet<TRelationship>}
@@ -49,12 +57,14 @@ export class JsonApiToManyRelationship<TEntity extends Entity, TRelationship ext
      * @param {EntitySet<TEntity>} entitySet Entity set.
      * @param {TEntity} entity Entity for which relationship is created.
      * @param {PropertyInfo<EntityCollection<TRelationship>>} propertyInfo Property info of relationship.
+     * @param {string} path Path which should be used to create a relationship.
      */
     public constructor(
         jsonApiEntityProvider: JsonApiEntityProvider, 
         entitySet: EntitySet<TEntity>, 
         entity: TEntity,
-        propertyInfo: PropertyInfo<EntityCollection<TRelationship>>
+        propertyInfo: PropertyInfo<EntityCollection<TRelationship>>,
+        path: string = jsonApiRelationshipPath
     )
     {
         const collectionGenericMetadatas = propertyInfo.propertyMetadata.genericMetadatas;
@@ -70,12 +80,14 @@ export class JsonApiToManyRelationship<TEntity extends Entity, TRelationship ext
             jsonApiEntityProvider.jsonApiAdapter,
             entitySet.typeMetadata,
             entity,
-            propertyInfo.propertyMetadata
+            propertyInfo.propertyMetadata,
+            path
         );
-
+        
         this.entitySet = entitySet;
         this.entity = entity;
         this.propertyInfo = propertyInfo;
+        this.path = path;
         this.relationshipSet = new EntitySet(relationshipTypeMetadata, jsonApiToManyRelationshipProvider);
 
         return;

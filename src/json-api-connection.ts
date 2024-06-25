@@ -1,14 +1,14 @@
-import fetch, { Headers, Request } from 'cross-fetch';
+import { Headers, Request } from 'cross-fetch';
 import { isEmpty, isObject, isString } from 'lodash';
 import { ConflictJsonApiError } from './errors/conflict-json-api-error';
 import { ForbiddenJsonApiError } from './errors/forbidden-json-api-error';
 import { NotFoundJsonApiError } from './errors/not-found-json-api-error';
 import { OtherJsonApiError } from './errors/other-json-api-error';
+import { JsonApiFetchInterceptor } from './json-api-fetch-interceptor';
 import { JsonApiRequestInterceptor } from './json-api-request-interceptor';
 import { JsonApiResponseInterceptor } from './json-api-response-interceptor';
 import { DocumentObject } from './types/document-object';
 import { LinkObject } from './types/link-object';
-import { JsonApiFetchInterceptor } from './json-api-fetch-interceptor';
 
 /**
  * Represents a connection to json api.
@@ -57,6 +57,7 @@ export class JsonApiConnection
      * 
      * @param {string} baseUrl Base url provided by developer. 
      * @param {JsonApiRequestInterceptor} jsonApiRequestInterceptor Json api request interceptor for adding additional behaviours.
+     * @param {JsonApiFetchInterceptor} jsonApiFetchInterceptor Json api fetch interceptor for adding additional behaviours.
      * @param {JsonApiResponseInterceptor} jsonApiResponseInterceptor Json api response interceptor for adding additional behaviours.
      */
     public constructor(

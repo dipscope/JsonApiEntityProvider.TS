@@ -8,8 +8,10 @@ describe('Json api entity provider', () =>
         const userSet = specEntityStore.userSet;
         const name = generateRandomString();
         const user = new User(name, 1);
+        
         await expectAsync(userSet.add(user)).toBeRejectedWithError('Fetch Request Intercepted');
     });
+
     it('should add new entities', async () =>
     {
         const specEntityStore = new SpecEntityStore();
