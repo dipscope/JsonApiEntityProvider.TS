@@ -246,4 +246,28 @@ export class JsonApiToManyRelationship<TEntity extends Entity, TRelationship ext
     {
         return this.relationshipSet.bulkRemove(relationshipCollectionLike);
     }
+    
+    /**
+     * Saves a child entity.
+     *
+     * @param {TRelationship} relationship Child entity to be saved.
+     *
+     * @returns {Promise<TRelationship>} Saved entity.
+     */
+    public save(relationship: TRelationship): Promise<TRelationship>
+    {
+        return this.relationshipSet.save(relationship);
+    }
+
+    /**
+     * Bulk saves a child entities collection.
+     *
+     * @param {EntityCollectionLike<TRelationship>} relationshipCollectionLike Child entities collection to be saved.
+     *
+     * @returns {Promise<EntityCollection<TRelationship>>} Saved entity collection.
+     */
+    public bulkSave(relationshipCollectionLike: EntityCollectionLike<TRelationship>): Promise<EntityCollection<TRelationship>>
+    {
+        return this.relationshipSet.bulkSave(relationshipCollectionLike);
+    }
 }
