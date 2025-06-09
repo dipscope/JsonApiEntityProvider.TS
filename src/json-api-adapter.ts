@@ -528,7 +528,7 @@ export class JsonApiAdapter
 
         for (const propertyMetadata of serializerContext.typeMetadata.propertyMetadataMap.values())
         {
-            if (propertyMetadata.serializationConfigured && !propertyMetadata.serializable)
+            if (!propertyMetadata.serializable)
             {
                 continue;
             }
@@ -823,7 +823,7 @@ export class JsonApiAdapter
 
         for (const propertyMetadata of serializerContext.typeMetadata.propertyMetadataMap.values())
         {
-            if (propertyMetadata.serializationConfigured && !propertyMetadata.deserializable)
+            if (!propertyMetadata.deserializable)
             {
                 continue;
             }

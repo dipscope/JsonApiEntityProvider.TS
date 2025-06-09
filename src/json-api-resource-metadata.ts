@@ -33,7 +33,7 @@ export class JsonApiResourceMetadata<TEntity extends Entity> extends TypeExtensi
      */
     public get type(): string
     {
-        return this.typeMetadata.extractCustomOption(jsonApiResourceTypeKey) ?? this.typeMetadata.typeName;
+        return this.typeMetadata.extractCustomValue(jsonApiResourceTypeKey) ?? this.typeMetadata.typeName;
     }
 
     /**
@@ -43,7 +43,7 @@ export class JsonApiResourceMetadata<TEntity extends Entity> extends TypeExtensi
      */
     public get route(): string
     {
-        return this.typeMetadata.extractCustomOption(jsonApiResourceRouteKey) ?? this.type;
+        return this.typeMetadata.extractCustomValue(jsonApiResourceRouteKey) ?? this.type;
     }
 
     /**
@@ -55,7 +55,7 @@ export class JsonApiResourceMetadata<TEntity extends Entity> extends TypeExtensi
      */
     public hasType(type: string | undefined): this
     {
-        this.typeMetadata.hasCustomOption(jsonApiResourceTypeKey, type)
+        this.typeMetadata.hasCustomValue(jsonApiResourceTypeKey, type)
             .hasDiscriminator(jsonApiResourceType)
             .hasDiscriminant(this.type)
             .shouldPreserveDiscriminator();
@@ -72,7 +72,7 @@ export class JsonApiResourceMetadata<TEntity extends Entity> extends TypeExtensi
      */
     public hasRoute(route: string | undefined): this
     {
-        this.typeMetadata.hasCustomOption(jsonApiResourceRouteKey, route);
+        this.typeMetadata.hasCustomValue(jsonApiResourceRouteKey, route);
 
         return this;
     }

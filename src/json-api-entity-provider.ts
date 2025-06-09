@@ -1,4 +1,3 @@
-import fetch from 'cross-fetch';
 import { first, isNil, merge, toString } from 'lodash';
 import { AddCommand, BatchRemoveCommand, BatchUpdateCommand, CommandNotSupportedError, EntitySet } from '@dipscope/entity-store';
 import { IncludeClause, IncludeCollectionClause, PaginatedEntityCollection } from '@dipscope/entity-store';
@@ -47,7 +46,7 @@ export class JsonApiEntityProvider implements EntityProvider
     {
         const defaultJsonApiRequestInterceptor = (request: Request) => request;
         const defaultJsonApiResponseInterceptor = (response: Response) => response;
-        const defaultJsonApiFetchInterceptor = fetch;
+        const defaultJsonApiFetchInterceptor = (request: Request) => fetch(request);
         const jsonApiRequestInterceptor = jsonApiEntityProviderOptions.jsonApiRequestInterceptor ?? defaultJsonApiRequestInterceptor;
         const jsonApiResponseInterceptor = jsonApiEntityProviderOptions.jsonApiResponseInterceptor ?? defaultJsonApiResponseInterceptor;
         const jsonApiFetchInterceptor = jsonApiEntityProviderOptions.jsonApiFetchInterceptor ?? defaultJsonApiFetchInterceptor;

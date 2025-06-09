@@ -1,4 +1,3 @@
-import fetch from 'cross-fetch';
 import { EntityCollection, EntitySet, EntityStore } from '@dipscope/entity-store';
 import { Inject, Property, Type, TypeConfiguration, TypeManager, TypeMetadata } from '@dipscope/type-manager';
 import { JsonApiEntityProvider, JsonApiNetFilterExpressionVisitor, JsonApiNetMetadataExtractor, JsonApiNetPaginateExpressionVisitor, JsonApiResource, JsonApiResourceMetadata } from '../src';
